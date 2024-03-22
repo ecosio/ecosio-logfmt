@@ -1,0 +1,581 @@
+<!--
+
+    Copyright (C) 2023-2024 ecosio
+    All rights reserved
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <!--
+  Use the following commands to:
+
+  - check for plugin updates:                     mvn versions:display-plugin-updates
+  - check for dependency updates:                 mvn versions:display-dependency-updates
+  - generate project report without deployment:   mvn clean compile site
+  - update license headers:                       mvn license:format
+  -->
+
+  <groupId>com.ecosio</groupId>
+  <artifactId>ecosio-logfmt</artifactId>
+  <version>${revision}</version>
+
+  <name>ecosio-logfmt</name>
+  <description>Logback appender with LogFMT support</description>
+  <url>https://github.com/ecosio/ecosio-logfmt</url>
+ 
+  <inceptionYear>2023</inceptionYear>
+
+  <properties>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+    <maven.compiler.release>17</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+    <revision>0-SNAPSHOT</revision>
+    <junit.version>5.10.2</junit.version>
+  </properties>
+
+  <repositories>
+    <repository>
+      <id>central</id>
+      <name>Maven Central</name>
+      <url>https://repo.maven.apache.org/maven2/</url>
+    </repository>
+  </repositories>
+
+  <licenses>
+    <license>
+      <name>ecosio</name>
+      <url>LICENSE</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <scm>
+    <connection>scm:git:git@github.com:ecosio/ecosio-logfmt.git</connection>
+    <url>https://github.com/ecosio/ecosio-logfmt</url>
+    <developerConnection>scm:git:git@github.com:ecosio/ecosio-logfmt.git</developerConnection>
+    <tag>HEAD</tag>
+  </scm>
+
+  <distributionManagement>
+    <site>
+      <id>github</id>
+      <url>scm:git:https://github.com/ecosio/ecosio-logfmt.git</url>
+    </site>
+    <!-- Deploy to Maven Central -->
+    <repository>
+      <id>ossrh</id>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+    </repository>
+    <snapshotRepository>
+      <id>ossrh</id>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+    </snapshotRepository>
+  </distributionManagement>
+
+  <developers>
+    <developer>
+     <id>marco.zapletal</id>
+     <name>Marco Zapletal</name>
+     <roles>
+       <role>lead</role>
+     </roles>
+    </developer>
+    <developer>
+      <id>RovoMe</id>
+      <name>Roman Vottner</name>
+      <roles>
+        <role>developer</role>
+      </roles>
+    </developer>
+  </developers>
+
+  <issueManagement>
+    <system>GitHub</system>
+    <url>https://github.com/ecosio/ecosio-logfmt/issues</url>
+  </issueManagement>
+
+  <dependencies>
+    <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>2.0.12</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/ch.qos.logback/logback-classic -->
+    <dependency>
+      <groupId>ch.qos.logback</groupId>
+      <artifactId>logback-classic</artifactId>
+      <version>1.5.3</version>
+    </dependency>
+
+    <!-- https://mvnrepository.com/artifact/com.github.spotbugs/spotbugs-annotations -->
+    <dependency>
+      <groupId>com.github.spotbugs</groupId>
+      <artifactId>spotbugs-annotations</artifactId>
+      <version>4.8.3</version>
+    </dependency>
+
+    <!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api -->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-engine -->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-params -->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-params</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/org.hamcrest/hamcrest -->
+    <dependency>
+      <groupId>org.hamcrest</groupId>
+      <artifactId>hamcrest</artifactId>
+      <version>2.2</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/org.mockito/mockito-junit-jupiter -->
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-junit-jupiter</artifactId>
+      <version>5.11.0</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <!-- Update outdated Maven plugins defined in parent pom -->
+    <pluginManagement>
+      <plugins>
+        <!-- Ignore alpha and beta dependency versions in
+             'mvn versions:display-dependency-updates' checks
+        -->
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>versions-maven-plugin</artifactId>
+          <version>2.16.2</version>
+          <configuration>
+            <rulesUri>file://${basedir}/version-rules.xml</rulesUri>
+          </configuration>
+        </plugin>
+        <!-- Ensure everyone using this project has a compatible Maven version running -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-enforcer-plugin</artifactId>
+          <version>3.4.1</version>
+          <executions>
+            <execution>
+              <id>enforce-maven</id>
+              <goals>
+                <goal>enforce</goal>
+              </goals>
+              <configuration>
+                <rules>
+                  <requireMavenVersion>
+                    <version>3.6.3</version>
+                  </requireMavenVersion>
+                </rules>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <!-- Removes generated files during build-time -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-clean-plugin</artifactId>
+          <version>3.3.2</version>
+        </plugin>
+        <!-- Adds source files in a separate JAR file -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-source-plugin</artifactId>
+          <version>3.3.0</version>
+          <executions>
+            <execution>
+              <id>attach-sources</id>
+              <goals>
+                <goal>jar</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <!-- compiler settings -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.13.0</version>
+          <configuration>
+            <source>${maven.compiler.source}</source>
+            <target>${maven.compiler.target}</target>
+            <release>${maven.compiler.release}</release>
+            <compilerArgs>
+              <compilerArg>-Xlint:unchecked</compilerArg>
+            </compilerArgs>
+          </configuration>
+        </plugin>
+        <!-- Generate javadoc -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>3.6.3</version>
+          <configuration>
+            <source>${maven.compiler.source}</source>
+            <show>protected</show>
+            <failOnWarnings>false</failOnWarnings>
+            <stylesheet>java</stylesheet>
+            <!-- Ignore warnings on undocumented record properties -->
+            <additionalJOption>-Xdoclint:-missing</additionalJOption>
+          </configuration>
+          <executions>
+            <execution>
+              <id>attach-javadocs</id>
+              <goals>
+                <goal>jar</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <!-- Handles the copying of project resources to the target directory -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-resources-plugin</artifactId>
+          <version>3.3.1</version>
+          <executions>
+            <execution>
+              <id>copy-resources</id>
+              <phase>install</phase>
+              <goals>
+                <goal>copy-resources</goal>
+              </goals>
+              <configuration>
+                <outputDirectory>${basedir}/target</outputDirectory>
+                <resources>
+                  <resource>
+                    <directory>src/main/resources</directory>
+                    <includes>
+                      <include>**/*.properties</include>
+                      <include>**/*.yml</include>
+                    </includes>
+                  </resource>
+                </resources>
+              </configuration>
+            </execution>
+          </executions>
+        </plugin>
+        <!-- Generates a Java archive file from the generated classes including test-jar archives -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>3.3.0</version>
+          <configuration>
+            <excludes>
+              <exclude>**/*.properties</exclude>
+            </excludes>
+            <archive>
+              <manifestEntries>
+                <Class-Path>. /* /opt/jwt/*</Class-Path>
+              </manifestEntries>
+            </archive>
+          </configuration>
+          <executions>
+            <execution>
+              <goals>
+                <goal>test-jar</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+        <!-- Copies the generated artifacts to the local maven repository -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-install-plugin</artifactId>
+          <version>3.1.1</version>
+        </plugin>
+        <!-- Deploys the artifact to a remote repository during deploy phase -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>3.1.1</version>
+        </plugin>
+        <!-- Generates a site for the project based on defined reports in the POM
+             Prevent the site plugin from deploying to the scm url
+             Usage: mvn clean compile site
+        -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-site-plugin</artifactId>
+          <version>3.12.1</version>
+          <executions>
+            <execution>
+              <id>stage-for-scm-publish</id>
+              <phase>post-site</phase>
+              <goals>
+                <goal>stage</goal>
+              </goals>
+            </execution>
+            <execution>
+              <id>default-deploy</id>
+              <phase>none</phase>
+            </execution>
+          </executions>
+        </plugin>
+        <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-project-info-reports-plugin -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-project-info-reports-plugin</artifactId>
+          <version>3.5.0</version>
+        </plugin>
+        <!-- Surefire is a test framework project. -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>3.2.5</version>
+        </plugin>
+        <!-- Failsafe is used to run integration tests -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-failsafe-plugin</artifactId>
+          <version>3.2.5</version>
+        </plugin>
+        <!-- This loads the content of header-*.txt into header-* Maven properties to be included
+             for resource filtering below. -->
+        <plugin>
+          <groupId>org.codehaus.gmavenplus</groupId>
+          <artifactId>gmavenplus-plugin</artifactId>
+          <version>3.0.2</version>
+          <executions>
+            <execution>
+              <!--<phase>generate-resources</phase>-->
+              <phase>validate</phase>
+              <goals>
+                <goal>execute</goal>
+              </goals>
+              <configuration>
+                <scripts>
+                  <script><![CDATA[
+                  import groovy.xml.XmlUtil
+                  project.properties['header-java'] = XmlUtil.escapeXml(new File(project.basedir, 'src/etc/header-java.txt').text.replace('\r', '').replace('\n', '\\n'))
+                  project.properties['header-properties'] = XmlUtil.escapeXml(new File(project.basedir, 'src/etc/header-properties.txt').text.replace('\r', '').replace('\n', '\\n'))
+                  project.properties['header-xml'] = XmlUtil.escapeXml(new File(project.basedir, 'src/etc/header-xml.txt').text.replace('\r', '').replaceAll('(.*)\n', '^\\\\Q$1\\\\E\\$\\\\n'))
+                  ]]></script>
+                </scripts>
+              </configuration>
+            </execution>
+          </executions>
+          <dependencies>
+            <dependency>
+              <groupId>org.codehaus.groovy</groupId>
+              <artifactId>groovy-ant</artifactId>
+              <version>3.0.21</version>
+              <scope>runtime</scope>
+            </dependency>
+            <dependency>
+              <groupId>org.codehaus.groovy</groupId>
+              <artifactId>groovy-xml</artifactId>
+              <version>3.0.21</version>
+              <scope>runtime</scope>
+            </dependency>
+          </dependencies>
+        </plugin>
+        <!-- Checkstyle ensures that everyone is committing code that is following our formatting guidelines -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-checkstyle-plugin</artifactId>
+          <version>3.3.1</version>
+          <configuration>
+            <configLocation>src/etc/checkstyle.xml</configLocation>
+            <propertyExpansion>
+              header-java=${header-java}
+              header-properties=${header-properties}
+              header-xml=${header-xml}
+            </propertyExpansion>
+            <encoding>UTF-8</encoding>
+            <consoleOutput>true</consoleOutput>
+            <failsOnError>true</failsOnError>
+            <linkXRef>false</linkXRef>
+          </configuration>
+          <executions>
+            <execution>
+              <id>validate</id>
+              <phase>validate</phase>
+              <goals>
+                <goal>check</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+      </plugin>
+      <!-- used to generate a flattend version of the pom.xml as we maintain our
+      revision through revision properties which would otherwise be visible
+      within the POM -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>flatten-maven-plugin</artifactId>
+        <version>1.6.0</version>
+        <configuration>
+          <updatePomFile>true</updatePomFile>
+          <flattenMode>bom</flattenMode>
+        </configuration>
+        <executions>
+          <execution>
+            <id>flatten</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>flatten</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>flatten.clean</id>
+            <phase>clean</phase>
+            <goals>
+              <goal>clean</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <!-- Check each Java file if it contains a license header and add it if it is missing
+      one. This occurs automatically at process-sources phase which is part of almost all
+      common actions like i.e. 'install' -->
+      <plugin>
+        <groupId>com.mycila</groupId>
+        <artifactId>license-maven-plugin</artifactId>
+        <version>4.3</version>
+        <configuration>
+          <licenseSets>
+            <licenseSet>
+              <header>src/etc/header.txt</header>
+              <includes>
+                <include>src/main/**/*.java</include>
+                <include>src/test/**/*.java</include>
+                <include>**/*.xml</include>
+                <include>**/*.properties</include>
+                <include>**/*.yml</include>
+              </includes>
+              <excludes>
+                <exlude>src/etc/*</exlude>
+              </excludes>
+            </licenseSet>
+          </licenseSets>
+        </configuration>
+        <executions>
+          <execution>
+            <id>license-management</id>
+            <goals>
+              <goal>format</goal>
+            </goals>
+            <phase>process-sources</phase>
+            <configuration>
+              <header>src/etc/header.txt</header>
+              <includes>
+                <include>**/header-java.txt</include>
+                <include>**/header-properties.txt</include>
+                <include>**/header-xml.txt</include>
+              </includes>
+              <mapping>
+                <header-java.txt>SLASHSTAR_STYLE</header-java.txt>
+                <header-properties.txt>CAMEL_PROPERTIES_STYLE</header-properties.txt>
+                <header-xml.txt>XML_STYLE</header-xml.txt>
+              </mapping>
+              <headerDefinitions>
+                <!-- custom style for properties files -->
+                <headerDefinition>src/etc/license-properties-headerdefinition.xml
+                </headerDefinition>
+              </headerDefinitions>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <!-- The Failsafe Plugin is designed to run integration tests while the Surefire Plugin is
+           designed to run unit tests. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <!-- This loads the content of header-*.txt into header-* Maven properties to be included
+             for resource filtering below. -->
+      <plugin>
+        <groupId>org.codehaus.gmavenplus</groupId>
+        <artifactId>gmavenplus-plugin</artifactId>
+        <version>3.0.2</version>
+      </plugin>
+      <!-- Checkstyle ensures that everyone is committing code that is following our formatting guidelines -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <version>3.3.1</version>
+      </plugin>
+    </plugins>
+  </build>
+
+  <reporting>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.gmavenplus</groupId>
+        <artifactId>gmavenplus-plugin</artifactId>
+        <version>3.0.2</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-report-plugin</artifactId>
+        <version>3.2.5</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <version>3.3.1</version>
+        <reportSets>
+          <reportSet>
+            <reports>
+              <report>checkstyle</report>
+            </reports>
+          </reportSet>
+        </reportSets>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jxr-plugin</artifactId>
+        <version>3.3.2</version>
+      </plugin>
+    </plugins>
+  </reporting>
+</project>
