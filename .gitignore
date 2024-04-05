@@ -1,0 +1,16 @@
+.idea/
+.settings/
+.vscode/
+bin/
+target/
+
+.classpath
+.project
+.flattened-pom.xml
+*.iml
+
+workspace.code-workspace
+zz
+.env
+.conf
+.factorypath
