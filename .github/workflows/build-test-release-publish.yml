@@ -1,0 +1,72 @@
+# This workflow will take care of releasing a manually tagged commit to Maven Central and announcing the new release on
+# GitHub.
+#
+# A job in a workflow is a set of actions to be performed in sequence and a workflow can have multiple jobs defined at
+# once. If multiple jobs are defined they will be executed in parallel unless a dependency is declared on other jobs,
+# then these jobs are run in sequence.
+
+name: Release on manual tagging
+run-name: ${{ github.actor }} is releasing new version ${{ github.ref }} of ecosio-logfmt
+# we want to trigger our build->test->release pipeline on manual tags
+on:
+  push:
+    # Pattern matched against refs/tags
+    tags:
+      - '*' # Push events to every tag not containing /
+env:
+  MAVEN_OPTS: "-Dhttps.protocols=TLSv1.2 -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN -Dorg.slf4j.simpleLogger.showDateTime=true -Djava.awt.headless=true"
+  MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end --show-version -DinstallAtEnd=true -DdeployAtEnd=true -U"
+  ENVIRONMENT: "ci"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [ '17', '21' ]
+    name: Java ${{ matrix.Java }} build
+    steps:
+      - run: echo "Building tag ${{ github.ref }}"
+      - uses: ./.github/actions/init-java-repo
+        with:
+          java-version: ${{ matrix.Java }}
+      - name: Build
+        run: |
+          test -n "${{ github.ref }}" && REVISION="${{ github.ref }}" || REVISION=`git describe --always --long --tags`
+          export REVISION
+          echo "REV: ${REVISION} - Descr: Pipeline ${{ github.run_id }} / JOB ${{ github.job }} (${{ github.job_workflow_sha }} - Tag: ${{ github.ref_name }} ${{ env.MAVEN_CLI_OPTS }} test"
+          mvn -Drevision=${REVISION} -Drp.description="Pipeline ${{ github.run_id }} / JOB ${{ github.job }} (${{ github.job_workflow_sha }})" -Drp.tags="${{ github.ref_name }}" ${{ env.MAVEN_CLI_OPTS }} compile
+      - name: Package
+        run: |
+          mvn ${{ env.MAVEN_CLI_OPTS }} "-Drevision=${REVISION}" -DskipTests -DskipITs package
+
+  # test the previous build project artifact
+  test:
+    needs: [build]
+    strategy:
+      matrix:
+        java: [ '17', '21' ]
+    name: Java ${{ matrix.Java }} test
+    uses: ./.github/workflows/test.yml
+    with:
+      java-version: ${{ matrix.Java }}
+      mvn-cli-opts: $${{ env.MAVEN_CLI_OPTS }}
+    secrets: inherit
+
+  # deploy the new release to Maven Central
+  release:
+    needs: [test]
+    strategy:
+      matrix:
+        java: [ '17', '21' ]
+    name: Java ${{ matrix.Java }} release
+    uses: ./.github/workflows/deploy-to-maven-central.yml
+    with:
+      java-version: ${{ matrix.Java }}
+      mvn-cli-opts: $${{ env.MAVEN_CLI_OPTS }}
+    secrets: inherit
+
+  # announce the new release on GitHub
+  publish:
+    needs: [release]
+    uses: ./.github/workflows/publish-to-github.yml
+    secrets: inherit

@@ -1,0 +1,47 @@
+name: Release artifact to Maven Central
+
+on:
+  workflow_call:
+    inputs:
+      java-version:
+        required: true
+        type: string
+      mvn-cli-opts:
+        required: true
+        type: string
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    name: Java ${{ inputs.java-version }} release
+    steps:
+      - run: echo "Will start a Maven Central upload with version ${{ github.ref }}"
+      - name: Set up Maven Central Repository
+        # Sets up the Java JDK and also configures the Maven 'settings.xml' file to add authentication for the ossrh
+        # repository using the 'MAVEN_USERNAME' and 'MAVEN_PASSWORD'  environment variables.
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ inputs.java-version }}
+          distribution: 'temurin'
+          cache: 'maven'
+          cache-dependency-path: |
+            pom.xml
+          server-id: ossrh
+          # environment variables for the username and password/token to the Apache Maven repository
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_PASSWORD
+      # cache Maven dependencies for later use
+      - name: Cache local Maven repository
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: Publish package
+        run: |
+          echo "mvn ${{ inputs.mvn-cli-opts }} -DskipTests -DskipAssembly=true -Dmaven.install.skip=true -Drevision=${{ github.ref }} deploy"
+          mvn ${{ inputs.mvn-cli-opts }} -DskipTests -DskipAssembly=true -Dmaven.install.skip=true -Drevision=${{ github.ref }} deploy
+        env:
+          MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}

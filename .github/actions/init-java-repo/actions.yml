@@ -1,0 +1,36 @@
+inputs:
+  java-version:
+    required: true
+    type: string
+  ref:
+    required: false
+    type: string
+
+init-java-repo:
+  runs-on: ubuntu-latest
+  name: Java ${{ inputs.java-version }} build
+  steps:
+    - name: configure git
+      run: git config --global init.defaultBranch main
+    # checkout the project to the runner
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 2 # do not download the whole git history
+        ref: ${{ github.ref }}
+    # install Java SDK on the runner
+    - name: Set up JDK ${{ inputs.java-version }}
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ inputs.java-version }}
+        distribution: 'temurin'
+        cache: 'maven'
+        cache-dependency-path: |
+          pom.xml
+    # cache Maven dependencies for later use
+    - name: Cache local Maven repository
+      uses: actions/cache@v4
+      with:
+        path: ~/.m2/repository
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-

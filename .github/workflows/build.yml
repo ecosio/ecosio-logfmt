@@ -1,0 +1,25 @@
+name: Build Java code
+
+on:
+  workflow_call:
+    inputs:
+      java-version:
+        required: true
+        type: string
+      mvn-cli-opts:
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Java ${{ inputs.java-version }} build
+    steps:
+      - uses: ./.github/actions/init-java-repo
+        with:
+          java-version: ${{ inputs.java-version }}
+      # build the project on the runner
+      - name: Build
+        run: |
+          echo "Build with: mvn ${{ inputs.mvn-cli-opts }} compile"
+          mvn ${{ inputs.mvn-cli-opts }} compile
