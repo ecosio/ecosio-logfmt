@@ -21,7 +21,7 @@ jobs:
     uses: ./.github/workflows/build.yml
     with:
         java-version: ${{ matrix.Java }}
-        mvn-cli-opts: ${{ env.MAVEN_CLI_OPTS }}
+        mvn-cli-opts: $MAVEN_CLI_OPTS
     secrets: inherit
 
   test:
@@ -33,5 +33,5 @@ jobs:
     uses: ./.github/workflows/test.yml
     with:
       java-version: ${{ matrix.Java }}
-      mvn-cli-opts: ${{ env.MAVEN_CLI_OPTS }}
+      mvn-cli-opts: $MAVEN_CLI_OPTS
     secrets: inherit
