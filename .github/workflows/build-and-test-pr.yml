@@ -22,6 +22,8 @@ jobs:
     steps:
       # checkout the project to the runner
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2 # do not download the whole git history
       # install Java SDK on the runner
       - name: Set up JDK ${{ matrix.Java }}
         uses: actions/setup-java@v4
@@ -40,7 +42,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
       - name: Debug Diff
-        run: git --no-pager diff
+        run: git --no-pager diff --name-only origin/main origin/${{ github.ref }}
       # build the project on the runner
       - name: Build
         run: |
