@@ -42,7 +42,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
       - name: Debug Diff
-        run: git --no-pager diff --name-only origin/main origin/${{ github.ref }}
+        run: git --no-pager diff
       # build the project on the runner
       - name: Build
         run: |
