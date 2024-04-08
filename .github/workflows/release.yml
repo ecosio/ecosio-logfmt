@@ -50,8 +50,8 @@ jobs:
         run: |
           test -n "${{ github.ref }}" && REVISION="${{ github.ref }}" || REVISION=`git describe --always --long --tags`
           export REVISION
-          echo "REV: ${REVISION} - Descr: Pipeline ${{ github.run_id }} / JOB ${{ github.job }} (${{ github.job_workflow_sha }} - Tag: ${{ github.ref_name }} $MAVEN_CLI_OPTS test"
-          mvn -Drevision=${REVISION} -Drp.description="Pipeline ${{ github.run_id }} / JOB ${{ github.job }} (${{ github.job_workflow_sha }})" -Drp.tags="${{ github.ref_name }}" $MAVEN_CLI_OPTS test
+          echo "REV: ${REVISION} - Descr: Pipeline ${{ github.run_id }} / JOB ${{ github.job }} (${{ github.job_workflow_sha }} - Tag: ${{ github.ref_name }} ${{ env.MAVEN_CLI_OPTS }} test"
+          mvn -Drevision=${REVISION} -Drp.description="Pipeline ${{ github.run_id }} / JOB ${{ github.job }} (${{ github.job_workflow_sha }})" -Drp.tags="${{ github.ref_name }}" ${{ env.MAVEN_CLI_OPTS }} test
   # test the previous build project artifact
   test:
     runs-on: ubuntu-latest
@@ -82,8 +82,8 @@ jobs:
             ${{ runner.os }}-maven-
       - name: Test
         run: | 
-          echo "Verify on: $MAVEN_CLI_OPTS verify"
-          mvn $MAVEN_CLI_OPTS verify
+          echo "Verify on: ${{ env.MAVEN_CLI_OPTS }} verify"
+          mvn ${{ env.MAVEN_CLI_OPTS }} verify
   # deploy the new release to Maven Central
   release:
     runs-on: ubuntu-latest
@@ -117,7 +117,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
       - name: Publish package
-        run: mvn $MAVEN_CLI_OPTS -DskipTests -DskipAssembly=true -Dmaven.install.skip=true -Drevision=${{ github.ref }} deploy
+        run: mvn ${{ env.MAVEN_CLI_OPTS }} -DskipTests -DskipAssembly=true -Dmaven.install.skip=true -Drevision=${{ github.ref }} deploy
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
