@@ -1,0 +1,35 @@
+name: Release artifact to Maven central
+description: Builds and packages the Java repository
+
+runs:
+  using: "composite"
+  steps:
+    - run: echo "Will start a Maven Central upload with version ${{ github.ref }}"
+      shell: bash
+        - name: Generate changelog
+          id: changelog
+          uses: metcalfc/changelog-generator@v4.3.1
+          with:
+            myToken: ${{ secrets.GITHUB_TOKEN }}
+    - name: Publish to GitHub Repository
+      id: create_release
+      uses: ncipollo/release-action@v1
+      with:
+        tag: ${{ github.ref }}
+        name: Release ${{ github.ref }}
+        body: |
+          Grab the new version from Maven Central https://repo1.manven.org/maven2/com/ecosio/ecosio-logfmt/${{ github.ref }}/ by using it in your deps
+          
+          ```
+          <dependencies>
+            <dependency>
+                <groupId>com.ecosio</groupId>
+                <artifactId>ecosio-logfmt</artifactId>
+                <version>${{ github.ref }}</version>
+            </dependency>
+          </dependencies>
+          ```
+              
+          ### Things that changed in this release
+          ${{ steps.changelog.outputs.changelog }}
+        token: ${{ secrets.GITHUB_TOKEN }}

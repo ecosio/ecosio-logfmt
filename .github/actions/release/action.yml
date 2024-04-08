@@ -1,0 +1,24 @@
+name: Release artifact to Maven central
+description: Builds and packages the Java repository
+
+inputs:
+  java-version:
+    description: 'The Java version to use for building the artifacts'
+    required: true
+  mvn-cli-opts:
+    description: 'The client options to pass to Maven'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - run: echo "Will start a Maven Central upload with version ${{ github.ref }}"
+      shell: bash
+    - name: Publish package
+      shell: bash
+      run: |
+        echo "mvn ${{ inputs.mvn-cli-opts }} -DskipTests -DskipAssembly=true -Dmaven.install.skip=true -Drevision=${{ github.ref }} deploy"
+        mvn ${{ inputs.mvn-cli-opts }} -DskipTests -DskipAssembly=true -Dmaven.install.skip=true -Drevision=${{ github.ref }} deploy
+      env:
+        MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+        MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}

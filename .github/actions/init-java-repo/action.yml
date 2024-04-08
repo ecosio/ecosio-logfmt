@@ -22,6 +22,10 @@ runs:
         cache: 'maven'
         cache-dependency-path: |
           pom.xml
+        server-id: ossrh
+        # environment variables for the username and password/token to the Apache Maven repository
+        server-username: MAVEN_USERNAME
+        server-password: MAVEN_PASSWORD
     # cache Maven dependencies for later use
     - name: Cache local Maven repository
       uses: actions/cache@v4
