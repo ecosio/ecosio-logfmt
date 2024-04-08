@@ -14,24 +14,17 @@ env:
 
 jobs:
   build:
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         java: [ '17', '21' ]
-    name: Java ${{ matrix.Java }} build
-    uses: ./.github/workflows/build.yml
-    with:
-        java-version: ${{ matrix.Java }}
-        mvn-cli-opts: $MAVEN_CLI_OPTS
-    secrets: inherit
-
-  test:
-    needs: build
-    strategy:
-      matrix:
-        java: [ '17', '21' ]
-    name: Java ${{ matrix.Java }} test
-    uses: ./.github/workflows/test.yml
-    with:
-      java-version: ${{ matrix.Java }}
-      mvn-cli-opts: $MAVEN_CLI_OPTS
-    secrets: inherit
+    name: Java ${{ matrix.Java }}
+    steps:
+      - uses: ./.github/actions/build
+        with:
+          java-version: ${{ matrix.Java }}
+          mvn-cli-opts: $MAVEN_CLI_OPTS
+      - uses: ./.github/actions/test
+        with:
+          java-version: ${{ matrix.Java }}
+          mvn-cli-opts: $MAVEN_CLI_OPTS
