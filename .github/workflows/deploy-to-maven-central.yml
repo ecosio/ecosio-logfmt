@@ -16,6 +16,13 @@ jobs:
     name: Java ${{ inputs.java-version }} release
     steps:
       - run: echo "Will start a Maven Central upload with version ${{ github.ref }}"
+      - name: configure git
+        run: git config --global init.defaultBranch main
+      # checkout the project to the runner
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2 # do not download the whole git history
+          ref: ${{ github.ref }}
       - name: Set up Maven Central Repository
         # Sets up the Java JDK and also configures the Maven 'settings.xml' file to add authentication for the ossrh
         # repository using the 'MAVEN_USERNAME' and 'MAVEN_PASSWORD'  environment variables.
