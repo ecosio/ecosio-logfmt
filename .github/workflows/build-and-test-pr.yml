@@ -23,7 +23,7 @@ jobs:
       # checkout the project to the runner
       - uses: actions/checkout@v4
         with:
-          path: main # default branch
+          ref: main # default branch
       # install Java SDK on the runner
       - name: Set up JDK ${{ matrix.Java }}
         uses: actions/setup-java@v4
