@@ -1,14 +1,17 @@
+name: Init Java repo
+description: Initializes a runner with the necessities for using Maven to build and test Java applications
+
 inputs:
   java-version:
+    description: 'The Java version to use for building the artifacts'
     required: true
-    type: string
   ref:
+    description: 'The target branch to use'
     required: false
-    type: string
+    default: ${{ github.ref }}
 
-init-java-repo:
-  runs-on: ubuntu-latest
-  name: Java ${{ inputs.java-version }} build
+runs:
+  using: "composite"
   steps:
     # install Java SDK on the runner
     - name: Set up JDK ${{ inputs.java-version }}
