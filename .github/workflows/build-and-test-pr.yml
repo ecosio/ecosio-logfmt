@@ -40,7 +40,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
       - name: Debug Diff
-        run: echo "git --no-pager diff" # debug
+        run: git --no-pager diff
       # build the project on the runner
       - name: Build
         run: |
