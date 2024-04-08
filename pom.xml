@@ -236,7 +236,6 @@
             <source>${maven.compiler.source}</source>
             <show>protected</show>
             <failOnWarnings>false</failOnWarnings>
-            <stylesheet>java</stylesheet>
             <!-- Ignore warnings on undocumented record properties -->
             <additionalJOption>-Xdoclint:-missing</additionalJOption>
           </configuration>
@@ -403,7 +402,6 @@
               header-properties=${header-properties}
               header-xml=${header-xml}
             </propertyExpansion>
-            <encoding>UTF-8</encoding>
             <consoleOutput>true</consoleOutput>
             <failsOnError>true</failsOnError>
             <linkXRef>false</linkXRef>
@@ -493,21 +491,16 @@
             </goals>
             <phase>process-sources</phase>
             <configuration>
-              <header>src/etc/header.txt</header>
-              <includes>
-                <include>**/header-java.txt</include>
-                <include>**/header-properties.txt</include>
-                <include>**/header-xml.txt</include>
-              </includes>
               <mapping>
-                <header-java.txt>SLASHSTAR_STYLE</header-java.txt>
-                <header-properties.txt>CAMEL_PROPERTIES_STYLE</header-properties.txt>
-                <header-xml.txt>XML_STYLE</header-xml.txt>
+                <java>SLASHSTAR_STYLE</java>
+                <xml>XML_STYLE</xml>
+                <txt>XML_STYLE</txt>
+                <yml>SCRIPT_STYLE</yml>
+                <properties>CAMEL_PROPERTIES_STYLE</properties>
               </mapping>
               <headerDefinitions>
                 <!-- custom style for properties files -->
-                <headerDefinition>src/etc/license-properties-headerdefinition.xml
-                </headerDefinition>
+                <headerDefinition>src/etc/license-properties-headerdefinition.xml</headerDefinition>
               </headerDefinitions>
             </configuration>
           </execution>

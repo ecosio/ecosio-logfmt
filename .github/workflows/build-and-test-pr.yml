@@ -47,13 +47,17 @@ jobs:
   test:
     runs-on: ubuntu-latest
     needs: build
+    strategy:
+      matrix:
+        java: [ '17', '21' ]
+    name: Java ${{ matrix.Java }} test
     steps:
       # checkout the project to the runner
       - uses: actions/checkout@v4
-      # install Java 17 on the runner
+      # install Java SDK on the runner
       - uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: ${{ matrix.Java }}
           distribution: 'temurin'
           cache: 'maven'
           cache-dependency-path: |
