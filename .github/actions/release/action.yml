@@ -1,5 +1,5 @@
 name: Release artifact to Maven central
-description: Builds and packages the Java repository
+description: Deploys the generated artifacts to Maven Central
 
 inputs:
   java-version:

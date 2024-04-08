@@ -1,16 +1,14 @@
-name: Release artifact to Maven central
-description: Builds and packages the Java repository
+name: Publishes to GitHub
+description: Publishes updates on a new Maven Central release to GitHub
 
 runs:
   using: "composite"
   steps:
-    - run: echo "Will start a Maven Central upload with version ${{ github.ref }}"
-      shell: bash
-        - name: Generate changelog
-          id: changelog
-          uses: metcalfc/changelog-generator@v4.3.1
-          with:
-            myToken: ${{ secrets.GITHUB_TOKEN }}
+    - name: Generate changelog
+      id: changelog
+      uses: metcalfc/changelog-generator@v4.3.1
+      with:
+        myToken: ${{ secrets.GITHUB_TOKEN }}
     - name: Publish to GitHub Repository
       id: create_release
       uses: ncipollo/release-action@v1
