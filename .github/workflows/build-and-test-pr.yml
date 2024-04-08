@@ -42,7 +42,7 @@ jobs:
       # build the project on the runner
       - name: Build
         run: |
-          echo "Verify on: $MAVEN_CLI_OPS verify"
+          echo "Verify on: $MAVEN_CLI_OPTS verify"
           mvn $MAVEN_CLI_OPTS compile
   test:
     runs-on: ubuntu-latest
@@ -73,5 +73,5 @@ jobs:
       # run the tests on the runner
       - name: Test
         run: |
-          echo "Verify on: $MAVEN_CLI_OPS verify"
+          echo "Verify on: $MAVEN_CLI_OPTS verify"
           mvn $MAVEN_CLI_OPTS verify
