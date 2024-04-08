@@ -28,12 +28,12 @@ jobs:
         with:
           fetch-depth: 2 # do not download the whole git history
           ref: ${{ github.ref }}
-      - name: Build ${{ matrix.Java }}
+      - name: Build with Java ${{ matrix.Java }}
         uses: ./.github/actions/build
         with:
           java-version: ${{ matrix.Java }}
           mvn-cli-opts: $MAVEN_CLI_OPTS
-      - name: Test ${{ matrix.Java}}
+      - name: Test with Java ${{ matrix.Java}}
         uses: ./.github/actions/test
         with:
           java-version: ${{ matrix.Java }}

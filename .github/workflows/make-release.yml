@@ -7,6 +7,7 @@
 
 name: Release on manual tagging
 run-name: ${{ github.actor }} is releasing new version ${{ github.ref }} of ecosio-logfmt
+
 # we want to trigger our build->test->release pipeline on manual tags
 on:
   push:
@@ -28,6 +29,7 @@ jobs:
     name: Java ${{ matrix.Java }} build
     steps:
       - run: echo "Building tag ${{ github.ref }}"
+        shell: bash
       - uses: ./.github/actions/init-java-repo
         with:
           java-version: ${{ matrix.Java }}
@@ -44,11 +46,11 @@ jobs:
         uses: ./.github/actions/test
         with:
           java-version: ${{ matrix.Java }}
-          mvn-cli-opts: ${{ env.MAVEN_CLI_OPTS }}
-      - name: Java ${{ matrix.Java }} release
+          mvn-cli-opts: $MAVEN_CLI_OPTS
+      - name: Deploy to Maven Central
         uses: ./.github/actions/release
         with:
           java-version: ${{ matrix.Java }}
-          mvn-cli-opts: ${{ env.MAVEN_CLI_OPTS }}
-      - name: Publish to GitHub
-        uses: ./.github/workflows/publish-to-github.yml
+          mvn-cli-opts: $MAVEN_CLI_OPTS
+      - name: Publish deployment notification to GitHub
+        uses: ./.github/actions/publish

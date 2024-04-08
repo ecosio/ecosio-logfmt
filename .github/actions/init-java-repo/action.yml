@@ -26,11 +26,11 @@ runs:
         # environment variables for the username and password/token to the Apache Maven repository
         server-username: MAVEN_USERNAME
         server-password: MAVEN_PASSWORD
-    # cache Maven dependencies for later use
+    # cache Maven dependencies for later use - use same cache name as 'setup-java' in the previous step
     - name: Cache local Maven repository
       uses: actions/cache@v4
       with:
         path: ~/.m2/repository
-        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        key: setup-java-${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
         restore-keys: |
           ${{ runner.os }}-maven-
