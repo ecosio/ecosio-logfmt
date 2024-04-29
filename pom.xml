@@ -14,7 +14,6 @@
   - check for plugin updates:                     mvn versions:display-plugin-updates
   - check for dependency updates:                 mvn versions:display-dependency-updates
   - generate project report without deployment:   mvn clean compile site
-  - update license headers:                       mvn license:format
   -->
 
   <groupId>com.ecosio</groupId>
@@ -459,11 +458,6 @@
           <version>3.3.1</version>
           <configuration>
             <configLocation>src/etc/checkstyle.xml</configLocation>
-            <propertyExpansion>
-              header-java=${header-java}
-              header-properties=${header-properties}
-              header-xml=${header-xml}
-            </propertyExpansion>
             <consoleOutput>true</consoleOutput>
             <failsOnError>true</failsOnError>
             <linkXRef>false</linkXRef>
@@ -521,53 +515,6 @@
           </execution>
         </executions>
       </plugin>
-      <!-- Check each Java file if it contains a license header and add it if it is missing
-      one. This occurs automatically at process-sources phase which is part of almost all
-      common actions like i.e. 'install' -->
-      <plugin>
-        <groupId>com.mycila</groupId>
-        <artifactId>license-maven-plugin</artifactId>
-        <version>4.3</version>
-        <configuration>
-          <licenseSets>
-            <licenseSet>
-              <header>src/etc/header.txt</header>
-              <includes>
-                <include>src/main/**/*.java</include>
-                <include>src/test/**/*.java</include>
-                <include>**/*.xml</include>
-                <include>**/*.properties</include>
-                <include>**/*.yml</include>
-              </includes>
-              <excludes>
-                <exlude>src/etc/*</exlude>
-              </excludes>
-            </licenseSet>
-          </licenseSets>
-        </configuration>
-        <executions>
-          <execution>
-            <id>license-management</id>
-            <goals>
-              <goal>format</goal>
-            </goals>
-            <phase>process-sources</phase>
-            <configuration>
-              <mapping>
-                <java>SLASHSTAR_STYLE</java>
-                <xml>XML_STYLE</xml>
-                <txt>XML_STYLE</txt>
-                <yml>SCRIPT_STYLE</yml>
-                <properties>CAMEL_PROPERTIES_STYLE</properties>
-              </mapping>
-              <headerDefinitions>
-                <!-- custom style for properties files -->
-                <headerDefinition>src/etc/license-properties-headerdefinition.xml</headerDefinition>
-              </headerDefinitions>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
       <!-- The Failsafe Plugin is designed to run integration tests while the Surefire Plugin is
            designed to run unit tests. -->
       <plugin>
@@ -582,13 +529,6 @@
           </execution>
         </executions>
       </plugin>
-      <!-- This loads the content of header-*.txt into header-* Maven properties to be included
-             for resource filtering below. -->
-      <plugin>
-        <groupId>org.codehaus.gmavenplus</groupId>
-        <artifactId>gmavenplus-plugin</artifactId>
-        <version>3.0.2</version>
-      </plugin>
       <!-- Checkstyle ensures that everyone is committing code that is following our formatting
            guidelines -->
       <plugin>
@@ -601,11 +541,6 @@
 
   <reporting>
     <plugins>
-      <plugin>
-        <groupId>org.codehaus.gmavenplus</groupId>
-        <artifactId>gmavenplus-plugin</artifactId>
-        <version>3.0.2</version>
-      </plugin>
       <!-- Generates reports information about the project -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -637,7 +572,6 @@
           <show>protected</show>
           <failOnWarnings>false</failOnWarnings>
           <release>17</release>
-          <stylesheet>java</stylesheet>
         </configuration>
         <reportSets>
           <reportSet>
@@ -655,7 +589,6 @@
         <version>3.2.5</version>
         <configuration>
           <showSuccess>true</showSuccess>
-          <outputDirectory>${basedir}/target/site</outputDirectory>
           <linkXRef>true</linkXRef>
         </configuration>
       </plugin>

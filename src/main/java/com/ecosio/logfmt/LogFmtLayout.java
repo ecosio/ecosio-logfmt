@@ -1,8 +1,3 @@
-/*
- * Copyright (C) 2023-2024 ecosio
- * All rights reserved
- */
-
 package com.ecosio.logfmt;
 
 import ch.qos.logback.classic.Level;
