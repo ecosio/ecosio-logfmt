@@ -9,6 +9,9 @@ inputs:
     description: 'The target branch to use'
     required: false
     default: ${{ github.ref }}
+  gpg-private-key:
+    description: 'GPG Private Key'
+    required: false
 
 runs:
   using: "composite"
@@ -20,9 +23,10 @@ runs:
         java-version: ${{ inputs.java-version }}
         distribution: 'temurin'
         cache: 'maven'
+        check-latest: true
         cache-dependency-path: |
           pom.xml
-        server-id: ossrh
+        server-id: central
         # environment variables for the username and password/token to the Apache Maven repository
         server-username: MAVEN_USERNAME
         server-password: MAVEN_PASSWORD
