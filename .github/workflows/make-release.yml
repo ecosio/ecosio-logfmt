@@ -7,7 +7,7 @@
 # other jobs, then these jobs are run in sequence.
 
 name: Release on manual tagging
-run-name: ${{ github.actor }} is releasing new version ${{ github.ref }} of test-release-pipeline
+run-name: ${{ github.actor }} is releasing new version ${{ github.ref }} of elbundy
 
 # we want to trigger our build->test->release pipeline on manual tags
 on:
