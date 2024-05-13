@@ -1,0 +1,26 @@
+name: Test Java project
+description: Tests the Code of the Java repository
+
+inputs:
+  java-version:
+    description: 'The Java version to use for building the artifacts'
+    required: true
+  mvn-cli-opts:
+    description: 'The client options to pass to Maven'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    # install Java SDK on the runner
+    - name: Build project with Java ${{ inputs.java-version }}
+      uses: ./.github/actions/init-java-repo
+      with:
+        java-version: ${{ inputs.java-version }}
+        ref: ${{ github.ref }}
+    # build the project on the runner
+    - name: Build
+      shell: bash
+      run: |
+        echo "Verify on: ${{ inputs.mvn-cli-opts }} verify"
+        mvn ${{ inputs.mvn-cli-opts }} verify

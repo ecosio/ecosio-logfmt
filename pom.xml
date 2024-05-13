@@ -14,7 +14,6 @@
   - check for plugin updates:                     mvn versions:display-plugin-updates
   - check for dependency updates:                 mvn versions:display-dependency-updates
   - generate project report without deployment:   mvn clean compile site
-  - update license headers:                       mvn license:format
   -->
 
   <groupId>com.ecosio</groupId>
@@ -98,6 +97,54 @@
     <system>GitHub</system>
     <url>https://github.com/ecosio/ecosio-logfmt/issues</url>
   </issueManagement>
+
+  <profiles>
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <!-- In order to release the artifact to Maven Central it needs to be
+               signed -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>3.2.4</version>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+                <configuration>
+                  <!-- This is required to make sure the plugin does not stop
+                       asking for user input on the passphrase -->
+                  <gpgArguments>
+                    <arg>--pinentry-mode</arg>
+                    <arg>loopback</arg>
+                  </gpgArguments>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <!-- Maven Central "new" Central Portal stuff - no "legacy" OSSRH setup unless explicitly
+               asked for and proved that the new setup doesn't work -->
+          <plugin>
+            <groupId>org.sonatype.central</groupId>
+            <artifactId>central-publishing-maven-plugin</artifactId>
+            <version>0.4.0</version>
+            <extensions>true</extensions>
+            <configuration>
+              <publishingServerId>central</publishingServerId>
+              <tokenAuth>true</tokenAuth>
+              <autoPublish>true</autoPublish>
+              <checksums>all</checksums>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 
   <dependencies>
     <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
@@ -236,7 +283,6 @@
             <source>${maven.compiler.source}</source>
             <show>protected</show>
             <failOnWarnings>false</failOnWarnings>
-            <stylesheet>java</stylesheet>
             <!-- Ignore warnings on undocumented record properties -->
             <additionalJOption>-Xdoclint:-missing</additionalJOption>
           </configuration>
@@ -285,11 +331,6 @@
             <excludes>
               <exclude>**/*.properties</exclude>
             </excludes>
-            <archive>
-              <manifestEntries>
-                <Class-Path>. /* /opt/jwt/*</Class-Path>
-              </manifestEntries>
-            </archive>
           </configuration>
           <executions>
             <execution>
@@ -310,6 +351,24 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-deploy-plugin</artifactId>
           <version>3.1.1</version>
+        </plugin>
+        <!-- We have to sign the deployment files in order to deploy those to Maven Central -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-gpg-plugin</artifactId>
+          <version>3.2.4</version>
+          <configuration>
+            <useAgent>true</useAgent>
+          </configuration>
+          <executions>
+            <execution>
+              <id>sign-artifacts</id>
+              <phase>verify</phase>
+              <goals>
+                <goal>sign</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
         <!-- Generates a site for the project based on defined reports in the POM
              Prevent the site plugin from deploying to the scm url
@@ -378,32 +437,27 @@
           </executions>
           <dependencies>
             <dependency>
-              <groupId>org.codehaus.groovy</groupId>
+              <groupId>org.apache.groovy</groupId>
               <artifactId>groovy-ant</artifactId>
-              <version>3.0.21</version>
+              <version>4.0.21</version>
               <scope>runtime</scope>
             </dependency>
             <dependency>
-              <groupId>org.codehaus.groovy</groupId>
+              <groupId>org.apache.groovy</groupId>
               <artifactId>groovy-xml</artifactId>
-              <version>3.0.21</version>
+              <version>4.0.21</version>
               <scope>runtime</scope>
             </dependency>
           </dependencies>
         </plugin>
-        <!-- Checkstyle ensures that everyone is committing code that is following our formatting guidelines -->
+        <!-- Checkstyle ensures that everyone is committing code that is following our formatting
+             guidelines -->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-checkstyle-plugin</artifactId>
           <version>3.3.1</version>
           <configuration>
             <configLocation>src/etc/checkstyle.xml</configLocation>
-            <propertyExpansion>
-              header-java=${header-java}
-              header-properties=${header-properties}
-              header-xml=${header-xml}
-            </propertyExpansion>
-            <encoding>UTF-8</encoding>
             <consoleOutput>true</consoleOutput>
             <failsOnError>true</failsOnError>
             <linkXRef>false</linkXRef>
@@ -461,58 +515,6 @@
           </execution>
         </executions>
       </plugin>
-      <!-- Check each Java file if it contains a license header and add it if it is missing
-      one. This occurs automatically at process-sources phase which is part of almost all
-      common actions like i.e. 'install' -->
-      <plugin>
-        <groupId>com.mycila</groupId>
-        <artifactId>license-maven-plugin</artifactId>
-        <version>4.3</version>
-        <configuration>
-          <licenseSets>
-            <licenseSet>
-              <header>src/etc/header.txt</header>
-              <includes>
-                <include>src/main/**/*.java</include>
-                <include>src/test/**/*.java</include>
-                <include>**/*.xml</include>
-                <include>**/*.properties</include>
-                <include>**/*.yml</include>
-              </includes>
-              <excludes>
-                <exlude>src/etc/*</exlude>
-              </excludes>
-            </licenseSet>
-          </licenseSets>
-        </configuration>
-        <executions>
-          <execution>
-            <id>license-management</id>
-            <goals>
-              <goal>format</goal>
-            </goals>
-            <phase>process-sources</phase>
-            <configuration>
-              <header>src/etc/header.txt</header>
-              <includes>
-                <include>**/header-java.txt</include>
-                <include>**/header-properties.txt</include>
-                <include>**/header-xml.txt</include>
-              </includes>
-              <mapping>
-                <header-java.txt>SLASHSTAR_STYLE</header-java.txt>
-                <header-properties.txt>CAMEL_PROPERTIES_STYLE</header-properties.txt>
-                <header-xml.txt>XML_STYLE</header-xml.txt>
-              </mapping>
-              <headerDefinitions>
-                <!-- custom style for properties files -->
-                <headerDefinition>src/etc/license-properties-headerdefinition.xml
-                </headerDefinition>
-              </headerDefinitions>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
       <!-- The Failsafe Plugin is designed to run integration tests while the Surefire Plugin is
            designed to run unit tests. -->
       <plugin>
@@ -527,14 +529,8 @@
           </execution>
         </executions>
       </plugin>
-      <!-- This loads the content of header-*.txt into header-* Maven properties to be included
-             for resource filtering below. -->
-      <plugin>
-        <groupId>org.codehaus.gmavenplus</groupId>
-        <artifactId>gmavenplus-plugin</artifactId>
-        <version>3.0.2</version>
-      </plugin>
-      <!-- Checkstyle ensures that everyone is committing code that is following our formatting guidelines -->
+      <!-- Checkstyle ensures that everyone is committing code that is following our formatting
+           guidelines -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-checkstyle-plugin</artifactId>
@@ -545,20 +541,64 @@
 
   <reporting>
     <plugins>
+      <!-- Generates reports information about the project -->
       <plugin>
-        <groupId>org.codehaus.gmavenplus</groupId>
-        <artifactId>gmavenplus-plugin</artifactId>
-        <version>3.0.2</version>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-project-info-reports-plugin</artifactId>
+        <version>3.5.0</version>
+        <reportSets>
+          <reportSet>
+            <reports>
+              <report>index</report>
+              <report>dependency-info</report>
+              <report>issue-management</report>
+              <report>scm</report>
+              <report>licenses</report>
+              <report>distribution-management</report>
+              <report>team</report>
+              <report>summary</report>
+            </reports>
+          </reportSet>
+        </reportSets>
       </plugin>
+      <!-- Generate Javadoc while reporting -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
+        <version>3.6.3</version>
+        <inherited>true</inherited>
+        <configuration>
+          <source>17</source>
+          <show>protected</show>
+          <failOnWarnings>false</failOnWarnings>
+          <release>17</release>
+        </configuration>
+        <reportSets>
+          <reportSet>
+            <id>html</id>
+            <reports>
+              <report>javadoc</report>
+            </reports>
+          </reportSet>
+        </reportSets>
       </plugin>
+      <!-- Generate surefire test reports -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-report-plugin</artifactId>
         <version>3.2.5</version>
+        <configuration>
+          <showSuccess>true</showSuccess>
+          <linkXRef>true</linkXRef>
+        </configuration>
       </plugin>
+      <!-- Add cross-references from failed tests to the line number in the source code -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jxr-plugin</artifactId>
+        <version>3.3.2</version>
+      </plugin>
+      <!-- Checkstyle report-->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-checkstyle-plugin</artifactId>
@@ -571,10 +611,24 @@
           </reportSet>
         </reportSets>
       </plugin>
+      <!-- Generates a changes report based on entries found in src/changes/changes.xml -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jxr-plugin</artifactId>
-        <version>3.3.2</version>
+        <artifactId>maven-changes-plugin</artifactId>
+        <version>2.12.1</version>
+        <reportSets>
+          <reportSet>
+            <reports>
+              <report>changes-report</report>
+            </reports>
+          </reportSet>
+        </reportSets>
+      </plugin>
+      <!-- Generates a report on known bugs found on analyzing the project code -->
+      <plugin>
+        <groupId>com.github.spotbugs</groupId>
+        <artifactId>spotbugs-maven-plugin</artifactId>
+        <version>4.8.4.0</version>
       </plugin>
     </plugins>
   </reporting>

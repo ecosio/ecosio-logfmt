@@ -1,8 +1,3 @@
-/*
- * Copyright (C) 2023-2024 ecosio
- * All rights reserved
- */
-
 package com.ecosio.logfmt;
 
 import java.util.AbstractMap;
@@ -48,6 +43,8 @@ import org.slf4j.Marker;
  * {@link #withCustomized(String, ApplyCallbackFor, BiFunction)} on the <em>LogFmtMarker</em>
  * class directly, which will create a new instance of this class along the way, or via
  * {@link #andCallback(ApplyCallbackFor, BiFunction)} on an existing instance directly.
+ *
+ * @author Roman Vottner
  */
 public class LogFmtMarker implements Marker {
 

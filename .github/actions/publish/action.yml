@@ -1,0 +1,49 @@
+name: Publishes to GitHub
+description: Publishes updates on a new Maven Central release to GitHub
+
+inputs:
+  github-token:
+    description: 'Github token'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Determine previous tag"
+      id: prev_tag
+      shell: bash
+      run: |
+        git fetch --all --tags
+        prev_tag=$(git tag | sort -V | grep -B 1 ${{ github.ref_name }} | head -1)
+        echo "prev_tag=$prev_tag" >> "$GITHUB_OUTPUT"
+
+    - name: "Generate changelog"
+      id: changelog
+      uses: metcalfc/changelog-generator@v4.3.1
+      with:
+        myToken: ${{ inputs.github-token }}
+        head-ref: ${{ github.ref_name }}
+        base-ref: ${{ steps.prev_tag.outputs.prev_tag }}
+
+    - name: "Publish to GitHub Repository"
+      id: create_release
+      uses: ncipollo/release-action@v1.14.0
+      with:
+        tag: ${{ github.ref_name }}
+        name: Release ${{ github.ref_name }}
+        body: |
+          Grab the new version from Maven Central https://repo1.manven.org/maven2/com/ecosio/ecosio-logfmt/${{ github.ref_name }}/ by using it in your deps
+          
+          ```
+          <dependencies>
+            <dependency>
+                <groupId>com.ecosio</groupId>
+                <artifactId>ecosio-logfmt</artifactId>
+                <version>${{ github.ref_name }}</version>
+            </dependency>
+          </dependencies>
+          ```
+          
+          ### Things that changed in this release
+          ${{ steps.changelog.outputs.changelog }}
+        token: ${{ inputs.github-token }}

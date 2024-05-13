@@ -1,8 +1,3 @@
-/*
- * Copyright (C) 2023-2024 ecosio
- * All rights reserved
- */
-
 package com.ecosio.logfmt;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -294,8 +289,7 @@ public class LogFmtLayoutTest {
             "time=\"2017-11-30T15:10:25\" level=info thread=thread0 "
                     + "package=com.ecosio.logfmt module=LogFmtLayout msg=\"test message\" "
                     + "error=\"java.lang.Exception: fubar\\n"
-                    + "\\tat com.ecosio.logfmt.LogFmtLayoutTest.errors(LogFmtLayoutTest.java:284)"
-                    + "\\n";
+                    + "\\tat com.ecosio.logfmt.LogFmtLayoutTest.errors(LogFmtLayoutTest.java:";
     assertThat(result, startsWith(expected));
   }
 
@@ -332,8 +326,7 @@ public class LogFmtLayoutTest {
             "time=\"2017-11-30T15:10:25\" level=info thread=thread0 "
                     + "package=com.ecosio.logfmt module=LogFmtLayout msg=\"test message\" "
                     + "error=\"java.lang.Exception: fubar\\n"
-                    + "\\tat com.ecosio.logfmt.LogFmtLayoutTest.customized_errors(LogFmtLayoutTest.java:319)"
-                    + "\\n";
+                    + "\\tat com.ecosio.logfmt.LogFmtLayoutTest.customized_errors(LogFmtLayoutTest.java:";
     assertThat(result, startsWith(expected));
     assertThat(result, containsString("root=\"java.lang.Exception: root\\n"));
   }

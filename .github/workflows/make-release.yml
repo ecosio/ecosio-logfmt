@@ -1,0 +1,110 @@
+# This workflow will take care of releasing a manually tagged commit to Maven
+# Central and announcing the new release on GitHub.
+#
+# A job in a workflow is a set of actions to be performed in sequence and a
+# workflow can have multiple jobs defined at once. If multiple jobs are
+# defined they will be executed in parallel unless a dependency is declared on
+# other jobs, then these jobs are run in sequence.
+
+name: Release on manual tagging
+run-name: ${{ github.actor }} is releasing new version ${{ github.ref }} of ecosio-logfmt
+
+# we want to trigger our build->test->release pipeline on manual tags
+on:
+  push:
+    # Pattern matched against refs/tags
+    tags:
+      - '*' # Push events to every tag not containing /
+
+env:
+  MAVEN_OPTS: "-Dhttps.protocols=TLSv1.2 -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN -Dorg.slf4j.simpleLogger.showDateTime=true -Djava.awt.headless=true"
+  MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end --show-version -DinstallAtEnd=true -DdeployAtEnd=true -U"
+  ENVIRONMENT: "ci"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        java: [ '17' ]
+    name: Java ${{ matrix.Java }} build
+    steps:
+      # print a general info on what is being released
+      - run: echo "Building tag ${{ github.ref_name }}"
+        shell: bash
+
+      # checkout repository to runner node
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref }}
+
+      # install GPG private key to keyring on runner node
+      - id: install-secret-key
+        name: Install gpg secret key
+        run: |
+          # Install gpg secret key
+          cat <(echo -e "${{ secrets.GPG_PRIVATE_KEY }}") | gpg --batch --import
+          # Verify gpg secret key
+          gpg --list-secret-keys --keyid-format LONG
+
+      # install Java SDK on the runner
+      - name: Set up JDK ${{ matrix.Java }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.Java }}
+          distribution: 'temurin'
+          cache: 'maven'
+          check-latest: true
+          cache-dependency-path: |
+            pom.xml
+          server-id: central
+          # environment variables for the username and password/token to the Apache Maven repository
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_PASSWORD
+
+      # cache Maven dependencies for later use - use same cache name as 'setup-java' in the previous step
+      - name: Cache local Maven repository
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: setup-java-${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      # build the actual project code
+      - name: Build
+        run: |
+          test -n "${{ github.ref }}" && REVISION="${{ github.ref_name }}" || REVISION=`git describe --always --long --tags`
+          mvn -Prelease -Drevision=${{ github.ref_name }} -Drp.description="Pipeline ${{ github.run_id }} / JOB ${{ github.job }} (${{ github.job_workflow_sha }})" -Drp.tags="${{ github.ref_name }}" ${{ env.MAVEN_CLI_OPTS }} compile
+
+      # package the code to artifacts, i.e. *-javadoc.jar, *-sources.jar, ...
+      - name: Package
+        run: |
+          mvn ${{ env.MAVEN_CLI_OPTS }} -Prelease "-Drevision=${{ github.ref_name }}" -DskipTests -DskipITs package
+
+      # test the actual project
+      - name: Java ${{ matrix.Java }} test
+        uses: ./.github/actions/test
+        with:
+          java-version: ${{ matrix.Java }}
+          mvn-cli-opts: $MAVEN_CLI_OPTS
+
+      # deploy the artifacts to Maven Central
+      - name: Deploy to Maven Central
+        uses: ./.github/actions/release
+        with:
+          java-version: ${{ matrix.Java }}
+          mvn-cli-opts: $MAVEN_CLI_OPTS
+          gpg-passphrase: ${{ secrets.GPG_PRIVATE_KEY_PASSPHRASE }}
+          sonatype-user: ${{ secrets.OSSRH_USERNAME }}
+          sonatype-token: ${{ secrets.OSSRH_TOKEN }}
+
+      # Create a release notification on Github pointing to the new release
+      - name: Publish deployment notification to GitHub
+        uses: ./.github/actions/publish
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}

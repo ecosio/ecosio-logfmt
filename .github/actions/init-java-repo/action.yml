@@ -1,0 +1,40 @@
+name: Init Java repo
+description: Initializes a runner with the necessities for using Maven to build and test Java applications
+
+inputs:
+  java-version:
+    description: 'The Java version to use for building the artifacts'
+    required: true
+  ref:
+    description: 'The target branch to use'
+    required: false
+    default: ${{ github.ref }}
+  gpg-private-key:
+    description: 'GPG Private Key'
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    # install Java SDK on the runner
+    - name: Set up JDK ${{ inputs.java-version }}
+      uses: actions/setup-java@v4
+      with:
+        java-version: ${{ inputs.java-version }}
+        distribution: 'temurin'
+        cache: 'maven'
+        check-latest: true
+        cache-dependency-path: |
+          pom.xml
+        server-id: central
+        # environment variables for the username and password/token to the Apache Maven repository
+        server-username: MAVEN_USERNAME
+        server-password: MAVEN_PASSWORD
+    # cache Maven dependencies for later use - use same cache name as 'setup-java' in the previous step
+    - name: Cache local Maven repository
+      uses: actions/cache@v4
+      with:
+        path: ~/.m2/repository
+        key: setup-java-${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-

@@ -1,0 +1,47 @@
+# This GitHub workflow will clone the current main repository to an Ubuntu
+# runner, apply the PR that triggered this workflow and then run the tests
+# against it
+
+name: Handle Pull Requests
+on:
+  pull_request:
+    # branches: [ main ]
+    types: [ opened, synchronize ]
+
+env:
+  MAVEN_OPTS: "-Dhttps.protocols=TLSv1.2 -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN -Dorg.slf4j.simpleLogger.showDateTime=true -Djava.awt.headless=true"
+  MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end --show-version -DinstallAtEnd=true -DdeployAtEnd=true -U"
+  ENVIRONMENT: "ci"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [ '17', '21' ]
+    name: Java ${{ matrix.Java }}
+    steps:
+      # configure git by setting the default, protected branch
+      - name: Configure git
+        run: git config --global init.defaultBranch main
+
+      # check out the pull-request to the runner
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2 # do not download the whole git history
+          ref: ${{ github.ref }}
+
+      # build the project with both Java 17 and 21 on the runner
+      - name: Build with Java ${{ matrix.Java }}
+        uses: ./.github/actions/build
+        with:
+          java-version: ${{ matrix.Java }}
+          mvn-cli-opts: $MAVEN_CLI_OPTS
+
+      # ... and perform tests on each environment on the runner
+      - name: Test with Java ${{ matrix.Java}}
+        uses: ./.github/actions/test
+        with:
+          java-version: ${{ matrix.Java }}
+          mvn-cli-opts: $MAVEN_CLI_OPTS

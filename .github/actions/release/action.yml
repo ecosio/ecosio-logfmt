@@ -1,0 +1,33 @@
+name: Release artifact to Maven central
+description: Deploys the generated artifacts to Maven Central
+
+inputs:
+  java-version:
+    description: 'The Java version to use for building the artifacts'
+    required: true
+  mvn-cli-opts:
+    description: 'The client options to pass to Maven'
+    required: true
+  gpg-passphrase:
+    description: 'GPG Private Key Passphrase'
+    required: true
+  sonatype-user:
+    description: 'Maven Central user'
+    required: true
+  sonatype-token:
+    description: 'Maven Central token'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - run: echo "Will start a Maven Central upload with version ${{ github.ref_name }}"
+      shell: bash
+    - name: Publish package
+      shell: bash
+      run: |
+        mvn ${{ inputs.mvn-cli-opts }} -Prelease -DskipTests -DskipAssembly=true -Dmaven.install.skip=true -Drevision=${{ github.ref_name }} deploy
+      env:
+        MAVEN_GPG_PASSPHRASE: ${{ inputs.gpg-passphrase }}
+        MAVEN_USERNAME: ${{ inputs.sonatype-user }}
+        MAVEN_PASSWORD: ${{ inputs.sonatype-token }}
