@@ -1,7 +1,11 @@
 package com.ecosio.logfmt;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.matchesPattern;
+import static org.hamcrest.Matchers.startsWith;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -82,6 +86,24 @@ public class LogFmtLayoutTest {
     String expected =
             "app=test-app time=\"2017-11-30T15:10:25\" level=info thread=thread0 "
                     + "package=com.ecosio.logfmt module=LogFmtLayout msg=\"test message\"\n";
+    assertThat(result, is(equalTo(expected)));
+  }
+
+  @Test
+  @DisplayName("supports messages with escaped literals")
+  public void messageWithEscapedCharacters() {
+    // Arrange
+    ILoggingEvent event = new EventBuilder("test message with \"escaped\" literals").build();
+    LogFmtLayout layout = new LogFmtLayout();
+
+    // Act
+    String result = layout.doLayout(event);
+
+    // Assert
+    String expected =
+            "time=\"2017-11-30T15:10:25\" level=info thread=thread0 "
+                    + "package=com.ecosio.logfmt module=LogFmtLayout "
+                    + "msg=\"test message with \\\"escaped\\\" literals\"\n";
     assertThat(result, is(equalTo(expected)));
   }
 
@@ -213,20 +235,19 @@ public class LogFmtLayoutTest {
   @DisplayName("support preprocessing message fields")
   public void preprocessCustomizedMessageField() {
     // Arrange
-    final String testMsg = "Failed delivery for (MessageId: ee980790-c1bb-11ee-a43b-c9fd07729bd1" +
-            " on ExchangeId: ee980790-c1bb-11ee-a43b-c9fd07729bd1). Exhausted after delivery " +
-            "attempt: 2 caught: java.lang.NullPointerException: host must not be null.\\n" +
-            "\\n" +
-            "Message History (source location and message history is disabled)\\n" +
-            "---------------------------------------------------------------------------------------------------------------------------------------\\n" +
-            "Source                                   ID                             Processor                                          Elapsed (ms)\\n" +
-            "                                         sample-route-failing/bean01 from[file:///opt/some-file-to-process?antExclude=*.tm   1160398262\\n" +
-            "\\t...\\n" +
-            "                                         sample-route-failing/RemoteWri bean[com.acme.someClass.failingBean                           0\\n" +
-            "\\n" +
-            "Stacktrace\\n" +
-            "--------------------------------------------------------------------------------------------------------------------------------------- " +
-            "Part that should stay in the message";
+    final String testMsg = """
+            Failed delivery for (MessageId: ee980790-c1bb-11ee-a43b-c9fd07729bd1 on ExchangeId: ee980790-c1bb-11ee-a43b-c9fd07729bd1). Exhausted after delivery attempt: 2 caught: java.lang.NullPointerException: host must not be null.
+
+            Message History (source location and message history is disabled)
+            ---------------------------------------------------------------------------------------------------------------------------------------
+            Source                                   ID                             Processor                                          Elapsed (ms)
+                                                     sample-route-failing/bean01 from[file:///opt/some-file-to-process?antExclude=*.tm   1160398262
+            \t...
+                                                     sample-route-failing/RemoteWri bean[com.acme.someClass.failingBean                           0
+
+            Stacktrace
+            ---------------------------------------------------------------------------------------------------------------------------------------
+            Part that should stay in the message""";
 
     Marker marker = LogFmtMarker.withCustomized(ApplyCallbackFor.MESSAGE,
             (msg, keyValues) -> {
@@ -258,16 +279,16 @@ public class LogFmtLayoutTest {
                     + "history=\"Failed delivery for (MessageId: " +
                     "ee980790-c1bb-11ee-a43b-c9fd07729bd1"
                     + " on ExchangeId: ee980790-c1bb-11ee-a43b-c9fd07729bd1). Exhausted after delivery "
-                    + "attempt: 2 caught: java.lang.NullPointerException: host must not be null.\\\\n"
-                    + "\\\\n"
-                    + "Message History (source location and message history is disabled)\\\\n"
-                    + "---------------------------------------------------------------------------------------------------------------------------------------\\\\n"
-                    + "Source                                   ID                             Processor                                          Elapsed (ms)\\\\n"
-                    + "                                         sample-route-failing/bean01 from[file:///opt/some-file-to-process?antExclude=*.tm   1160398262\\\\n"
-                    + "\\\\t...\\\\n"
-                    + "                                         sample-route-failing/RemoteWri bean[com.acme.someClass.failingBean                           0\\\\n"
-                    + "\\\\n"
-                    + "Stacktrace\\\\n"
+                    + "attempt: 2 caught: java.lang.NullPointerException: host must not be null.\\n"
+                    + "\\n"
+                    + "Message History (source location and message history is disabled)\\n"
+                    + "---------------------------------------------------------------------------------------------------------------------------------------\\n"
+                    + "Source                                   ID                             Processor                                          Elapsed (ms)\\n"
+                    + "                                         sample-route-failing/bean01 from[file:///opt/some-file-to-process?antExclude=*.tm   1160398262\\n"
+                    + "\\t...\\n"
+                    + "                                         sample-route-failing/RemoteWri bean[com.acme.someClass.failingBean                           0\\n"
+                    + "\\n"
+                    + "Stacktrace\\n"
                     +
                     "---------------------------------------------------------------------------------------------------------------------------------------\"\n";
     assertThat(result, is(equalTo(expected)));
@@ -408,8 +429,8 @@ public class LogFmtLayoutTest {
     String expected =
             "time=\"2017-11-30T15:10:25\" level=info thread=thread0 "
                     + "package=com.ecosio.logfmt module=LogFmtLayout "
-                    + "msg=\"GET /some/service\\\\nHost: example.com\\\\n"
-                    + "Authorization: Basic dXN***3Jk\\\\n\\\\n"
+                    + "msg=\"GET /some/service\\nHost: example.com\\n"
+                    + "Authorization: Basic dXN***3Jk\\n\\n"
                     + "<html><head><title>Test Page</title></head><body>Test content</body></html>\"\n";
     assertThat(result, is(equalTo(expected)));
   }
@@ -435,8 +456,8 @@ public class LogFmtLayoutTest {
     String expected =
             "time=\"2017-11-30T15:10:25\" level=info thread=thread0 "
                     + "package=com.ecosio.logfmt module=LogFmtLayout "
-                    + "msg=\"GET /some/service\\\\nHost: example.com\\\\n"
-                    + "Authorization: Basic dXNlcjE6c29tZVBhc3N3b3Jk\\\\n\\\\n"
+                    + "msg=\"GET /some/service\\nHost: example.com\\n"
+                    + "Authorization: Basic dXNlcjE6c29tZVBhc3N3b3Jk\\n\\n"
                     + "<html><head><title>Test Page</title></head><body>Test content</body></html>\"\n";
     assertThat(result, is(equalTo(expected)));
   }
@@ -547,7 +568,7 @@ public class LogFmtLayoutTest {
     } finally {
       // as we add the logfmt marker to the static confidential marker it will still be contained
       // in other methods that will retrieve the marker using the MarkerFactory! Hence, we remove
-      // it manually after this test so it doesn't influence other tests
+      // it manually after this test, so it doesn't influence other tests
       confidential.remove(marker);
     }
   }

@@ -86,8 +86,8 @@ public class LogFmtLayout extends LayoutBase<ILoggingEvent> {
    * Instantiates a new SLF4J log layout class that will format log messages in the
    * <em>logfmt</em> format.
    *
-   * <p>On initializing this layout will first register supported appenders and then set up a list
-   * of default appenders which will be processed one by one for each log message.
+   * <p>On initializing this layout will first register supported appender and then set up a list
+   * of default appender which will be processed one by one for each log message.
    */
   public LogFmtLayout() {
     appenders.put(NativeKey.TIME.toString(), this::timeAppender);
@@ -149,7 +149,7 @@ public class LogFmtLayout extends LayoutBase<ILoggingEvent> {
    *   &lt;/encoder&gt;
    * &lt;/appender&gt;</code></pre>
    * a {@code app=test-app} key-value property will be added to the start of each log message
-   * only preceeded by an eventually defined {@link #setPrefix(String) prefix} value.
+   * only preceded by an eventually defined {@link #setPrefix(String) prefix} value.
    *
    * @param appName The name of the application to add to each log message. If none was specified
    *               in the configuration XML then no app name will be added to the log message
@@ -299,7 +299,7 @@ public class LogFmtLayout extends LayoutBase<ILoggingEvent> {
 
       msg = handleCustomCallbacks(markers, msg, ApplyCallbackFor.MESSAGE);
     }
-    appendKeyValueAndEscape(sb, NativeKey.MESSAGE.toString(), escapeValue(msg));
+    appendKeyValueAndEscape(sb, NativeKey.MESSAGE.toString(), msg);
 
     appendCustomCallbackKeysIfNotPresentYet(sb, markers, NativeKey.MESSAGE.toString());
   }
@@ -377,7 +377,7 @@ public class LogFmtLayout extends LayoutBase<ILoggingEvent> {
     int customAppenderIdx = currAppenders.indexOf(customAppender);
     KeyValueAppender currAppender = appenders.get(currAppenderName);
     int currAppenderIdx = currAppenders.indexOf(currAppender);
-    // custom appender will automatically add any custom specified key/value pairs automatically.
+    // custom appender will automatically add any custom specified key/value pairs.
     // However, if a custom value is added to the key/value list after the custom appender was
     // processed, these values will not be added to the log line automatically. To load such
     // key/values we check if the current appender is defined after the custom appender and if so
@@ -450,7 +450,7 @@ public class LogFmtLayout extends LayoutBase<ILoggingEvent> {
    * of the configuration XML the values of matching keys will be replaced by <em>****</em>.
    */
   private void appendKeyValueAndEscape(StringBuilder sb, String key, Object value) {
-    if (key == null || "".equals(key)) {
+    if (key == null || key.isEmpty()) {
       return;
     }
 
@@ -500,11 +500,11 @@ public class LogFmtLayout extends LayoutBase<ILoggingEvent> {
     for (int i = 0; i < string.length(); i++) {
       char c = string.charAt(i);
       switch (c) {
-        case '\t' -> sb.append("\\t");
-        case '\b' -> sb.append("\\b");
-        case '\n' -> sb.append("\\n");
-        case '\r' -> sb.append("\\r");
-        case '\f' -> sb.append("\\f");
+        case '\t' -> sb.append("\\t"); // tabulator
+        case '\b' -> sb.append("\\b"); // back-space
+        case '\n' -> sb.append("\\n"); // new line
+        case '\r' -> sb.append("\\r"); // carriage return
+        case '\f' -> sb.append("\\f"); // form-feed
         case '\"' -> sb.append("\\\"");
         case '\\' -> sb.append("\\\\");
         default -> sb.append(c);
