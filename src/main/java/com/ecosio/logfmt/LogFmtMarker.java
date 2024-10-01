@@ -1,8 +1,13 @@
 package com.ecosio.logfmt;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.io.Serial;
 import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.EnumMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -46,197 +51,57 @@ import org.slf4j.Marker;
  *
  * @author Roman Vottner
  */
-public class LogFmtMarker implements Marker {
+public final class LogFmtMarker implements Marker {
 
   /**
-   * Creates a new marker instance using its default <em>LOGFMT</em> name and assigns a key and
-   * value to it as property.
-   *
-   * @param key A String based key to add to this marker
-   * @param value The value belonging to the key
-   * @return The reference to the new marker instance
+   * Serial version UID used for de/serialization of an object of this class.
    */
-  public static LogFmtMarker with(String key, Object value) {
-    return new LogFmtMarker().and(key, value);
-  }
+  @Serial
+  private static final long serialVersionUID = 3115377491590295959L;
 
   /**
-   * Creates a new marker instance using its default <em>LOGFMT</em> name and assigns a key and
-   * value to it as property.
-   *
-   * @param key An Object based key to add to this marker
-   * @param value The value belonging to the key
-   * @return The reference to the new marker instance
+   * The human-readable name of this marker object.
    */
-  public static LogFmtMarker with(Object key, Object value) {
-    return new LogFmtMarker().and(key, value);
-  }
-
-  /**
-   * Creates a new marker instance using the given name and assigns a key and value to it as
-   * property.
-   *
-   * @param name The name of the marker instance
-   * @param key A String based key to add to this marker
-   * @param value The value belonging to the key
-   * @return The reference to the new marker instance
-   */
-  public static LogFmtMarker with(String name, String key, Object value) {
-    return new LogFmtMarker(name).and(key, value);
-  }
-
-  /**
-   * Creates a new marker instance using the given name and assigns a key and value to it as
-   * property.
-   *
-   * @param name The name of the marker instance
-   * @param key An Object based key to add to this marker
-   * @param value The value belonging to the key
-   * @return The reference to the new marker instance
-   * @throws IllegalArgumentException if <em>name</em> is null or empty
-   */
-  public static LogFmtMarker with(String name, Object key, Object value) {
-    return new LogFmtMarker(name).and(key, value);
-  }
-
-  /**
-   * Creates a new marker instance using its default <em>LOGFMT</em> name and assigns it a
-   * callback hook for customizing the log output for a particular field identified by
-   * {@link ApplyCallbackFor}.
-   *
-   * <p>The callback will receive the log message as it would be logged without any preprocessing
-   * applied as well as a reference of the internally managed key and value segments that make up
-   * a log message.
-   *
-   * <p>The callback can be used to either filter out unwanted stuff from the log segment the
-   * callback is applied for or, as demonstrated with the sample code below, move parts of the
-   * respective log message to a separate field.
-   *
-   * <pre><code>
-   * Marker marker = LogFmtMarker.withCustomized(LogFmtMarker.ApplyCallbackFor.MESSAGE,
-   *         (msg, keyValues) -> {
-   *           String separator = "-----";
-   *           int idx = msg.lastIndexOf(separator) + separator.length();
-   *           String history = msg.substring(0, idx);
-   *           String message = msg.substring(idx + 1);
-   *
-   *           keyValues.add(new LogFmtMarker.KeyValue("history", history));
-   *           return message;
-   *         });
-   * </code></pre>
-   *
-   * <p>In the above sample the original value to log is taken and modified by removing the
-   * history part of that log message and storing it as new <em>history</em> field.
-   *
-   * <p>If multiple {@link LogFmtMarker} objects are chained and multiple customizations are
-   * present for the same field, i.e. the <em>msg</em> field, subsequent instances will receive
-   * the modified log message as input.
-   *
-   * @param applyFor The field to apply the customization for. Currently, only
-   *                 {@link ApplyCallbackFor#MESSAGE} and {@link ApplyCallbackFor#ERROR} fields
-   *                 are supported
-   * @param callback The callback to apply before generating the log statement. If multiple
-   *                 chained callbacks for the same field are present, consecutive callbacks will
-   *                 receive the output of the previous callback as input. The second input argument
-   *                 will be a list of key-value entries the current marker has configured. This
-   *                 can be used to add further customized keys and their value to the log line
-   * @return The initialized marker
-   * @since 1.0.3
-   */
-  public static LogFmtMarker withCustomized(ApplyCallbackFor applyFor,
-                                            BiFunction<String, List<KeyValue>, String> callback) {
-    return new LogFmtMarker().andCallback(applyFor, callback);
-  }
-
-  /**
-   * Creates a new marker instance using its specified marker name and assigns it a callback hook
-   * for customizing the log output for a particular field identified by {@link ApplyCallbackFor}.
-   *
-   * <p>The callback will receive the log message as it would be logged without any preprocessing
-   * applied as well as a reference of the internally managed key and value segments that make up
-   * a log message.
-   *
-   * <p>The callback can be used to either filter out unwanted stuff from the log segment the
-   * callback is applied for or, as demonstrated with the sample code below, move parts of the
-   * respective log message to a separate field.
-   *
-   * <pre><code>
-   * Marker marker = LogFmtMarker.withCustomized(
-   *         "CONFIDENTIAL",
-   *         LogFmtMarker.ApplyCallbackFor.MESSAGE,
-   *         (msg, keyValues) -> {
-   *           String separator = "-----";
-   *           int idx = msg.lastIndexOf(separator) + separator.length();
-   *           String history = msg.substring(0, idx);
-   *           String message = msg.substring(idx + 1);
-   *
-   *           keyValues.add(new LogFmtMarker.KeyValue("history", history));
-   *           return message;
-   *         });
-   * </code></pre>
-   *
-   * <p>In the above sample the original value to log is taken and modified by removing the
-   * history part of that log message and storing it as new <em>history</em> field.
-   *
-   * <p>If multiple {@link LogFmtMarker} objects are chained and multiple customizations are
-   * present for the same field, i.e. the <em>msg</em> field, subsequent instances will receive
-   * the modified log message as input.
-   *
-   * @param applyFor The field to apply the customization for. Currently, only
-   *                 {@link ApplyCallbackFor#MESSAGE} and {@link ApplyCallbackFor#ERROR} fields
-   *                 are supported
-   * @param callback The callback to apply before generating the log statement. If multiple
-   *                 chained callbacks for the same field are present, consecutive callbacks will
-   *                 receive the output of the previous callback as input. The second input argument
-   *                 will be a list of key-value entries the current marker has configured. This
-   *                 can be used to add further customized keys and their value to the log line
-   * @return The initialized marker
-   * @since 1.0.3
-   */
-  public static LogFmtMarker withCustomized(String name,
-                                            ApplyCallbackFor applyFor,
-                                            BiFunction<String, List<KeyValue>, String> callback) {
-    return new LogFmtMarker(name).andCallback(applyFor, callback);
-  }
-
-  /**
-   * A key/value entry for parts within a log statement.
-   *
-   * @param key The key to add to the log statement
-   * @param value The value to set for the key in the log statement
-   */
-  public record KeyValue(String key, Object value) {
-
-  }
-
   private final String name;
+  /**
+   * References to other nested marker objects.
+   */
   private final List<Marker> references = new ArrayList<>();
+  /**
+   * The list of key-value pairs this marker contains which should be added to the LogFMT formatted
+   * log line.
+   */
   private final List<KeyValue> keyValues = new LinkedList<>();
+  /**
+   * Any callbacks defined on this marker, i.e. to modify the message or error portions of a log
+   * line.
+   */
   private final Map<ApplyCallbackFor, BiFunction<String, List<KeyValue>, String>> callbacks =
-          new HashMap<>();
+          Collections.synchronizedMap(new EnumMap<>(ApplyCallbackFor.class));
 
   private LogFmtMarker() {
-    this("LOGFMT");
+    this.name = "LOGFMT";
   }
 
-  private LogFmtMarker(String name) {
+  private LogFmtMarker(@NonNull final String name) {
     checkParam(name, "Invalid marker name");
     this.name = name;
   }
 
   @Override
+  @NonNull
   public String getName() {
     return this.name;
   }
 
   @Override
-  public void add(Marker reference) {
+  public void add(@NonNull final Marker reference) {
     checkParam(reference, "Attempted to add invalid marker reference");
     references.add(reference);
   }
 
   @Override
-  public boolean remove(Marker reference) {
+  public boolean remove(@NonNull final Marker reference) {
     return references.remove(reference);
   }
 
@@ -252,17 +117,18 @@ public class LogFmtMarker implements Marker {
   }
 
   @Override
+  @NonNull
   public Iterator<Marker> iterator() {
     return references.iterator();
   }
 
   @Override
-  public boolean contains(Marker other) {
+  public boolean contains(@NonNull final Marker other) {
     return references.contains(other);
   }
 
   @Override
-  public boolean contains(String name) {
+  public boolean contains(@NonNull final String name) {
     return references.stream().anyMatch(m -> m.getName().equals(name));
   }
 
@@ -273,7 +139,7 @@ public class LogFmtMarker implements Marker {
    *         <code>false</code> if no callback was configured
    * @since 1.0.3
    */
-  boolean hasCallbacks() {
+  public boolean hasCallbacks() {
     return !callbacks.isEmpty();
   }
 
@@ -284,14 +150,15 @@ public class LogFmtMarker implements Marker {
    *
    * @param valueToLog The value of the original message or error to log or the output of any
    *                   preceding callback that was applied for that field
-   * @param applyFor Specifies the target field to apply the callback for
+   * @param applyFor   Specifies the target field to apply the callback for
    * @return Returns the output of the callback in case a callback for the given target field is
    *         available or the unmodified <em>valueToLog</em> value if no callback was applied
    * @since 1.0.3
    */
-  // package private on purpose
-  String applyCallbackFor(String valueToLog, ApplyCallbackFor applyFor) {
-    BiFunction<String, List<KeyValue>, String> callback = callbacks.get(applyFor);
+  @NonNull
+  public String applyCallbackFor(@NonNull final String valueToLog,
+                                 @NonNull final ApplyCallbackFor applyFor) {
+    final BiFunction<String, List<KeyValue>, String> callback = callbacks.get(applyFor);
     if (callback != null) {
       return callback.apply(valueToLog, keyValues);
     }
@@ -303,16 +170,21 @@ public class LogFmtMarker implements Marker {
    *
    * @return The defined keys of this marker
    */
-  List<Map.Entry<String, Object>> getDefinedKeyValues() {
+  @NonNull
+  public List<Map.Entry<String, Object>> getDefinedKeyValues() {
     return keyValues.stream()
             .map(kv -> new AbstractMap.SimpleEntry<>(kv.key, kv.value))
             .collect(Collectors.toList());
   }
 
   @Override
-  public boolean equals(Object o) {
+  @SuppressFBWarnings // https://sourceforge.net/p/findbugs/bugs/1385/
+  public boolean equals(@Nullable final Object o) {
     if (o == this) {
       return true;
+    }
+    if (o == null) {
+      return false;
     }
     if (!(o instanceof LogFmtMarker other)) {
       return false;
@@ -333,7 +205,7 @@ public class LogFmtMarker implements Marker {
 
   @Override
   public String toString() {
-    String refs;
+    final String refs;
     if (references.isEmpty()) {
       refs = "";
     } else {
@@ -349,12 +221,13 @@ public class LogFmtMarker implements Marker {
    * Adds a new key-value entry to this marker. If the key is null or empty the key and value
    * will be ignored and not added.
    *
-   * @param key A String based key to add to the marker
+   * @param key   A String based key to add to the marker
    * @param value The value for the provided key
    * @return The LogFmt marker object
    */
-  public LogFmtMarker and(String key, Object value) {
-    if (key != null && !"".equals(key)) {
+  @NonNull
+  public LogFmtMarker and(@NonNull final String key, @NonNull final Object value) {
+    if (!key.isEmpty()) {
       this.keyValues.add(new KeyValue(key, value));
     }
     return this;
@@ -364,12 +237,13 @@ public class LogFmtMarker implements Marker {
    * Adds a new key-value entry to this marker. If the key is null or empty the key and value
    * will be ignored and not added.
    *
-   * @param key An object based key to add to the marker
+   * @param key   An object based key to add to the marker
    * @param value The value for the provided key
    * @return The LogFmt marker object
    */
-  public LogFmtMarker and(Object key, Object value) {
-    if (key != null && !"".equals(key)) {
+  @NonNull
+  public LogFmtMarker and(@NonNull final Object key, @NonNull final Object value) {
+    if (!"".equals(key)) {
       this.keyValues.add(new KeyValue(key.toString(), value));
     }
     return this;
@@ -420,8 +294,10 @@ public class LogFmtMarker implements Marker {
    * @return A reference to the {@link LogFmtMarker} instance the method was called on
    * @since 1.0.3
    */
-  public LogFmtMarker andCallback(ApplyCallbackFor applyFor,
-                                  BiFunction<String, List<KeyValue>, String> callback) {
+  @NonNull
+  public LogFmtMarker andCallback(
+          @Nullable final ApplyCallbackFor applyFor,
+          @NonNull final BiFunction<String, List<KeyValue>, String> callback) {
     if (applyFor != null) {
       this.callbacks.put(applyFor, callback);
     }
@@ -437,9 +313,9 @@ public class LogFmtMarker implements Marker {
    *
    * @param consumer The bi-consumer to act on the key-value pairs of this marker
    */
-  public void forEach(BiConsumer<String, Object> consumer) {
+  public void forEach(@NonNull final BiConsumer<String, Object> consumer) {
     if (hasReferences()) {
-      for (Marker marker : references) {
+      for (final Marker marker : references) {
         if (marker instanceof LogFmtMarker base) {
           base.forEach(consumer);
         }
@@ -448,9 +324,176 @@ public class LogFmtMarker implements Marker {
     keyValues.forEach(keyValue -> consumer.accept(keyValue.key, keyValue.value));
   }
 
-  private void checkParam(Object obj, String msg) {
+  private void checkParam(@Nullable final Object obj, @Nullable final String msg) {
     if (obj == null || "".equals(obj)) {
       throw new IllegalArgumentException(msg);
     }
+  }
+
+  /**
+   * A key/value entry for parts within a log statement.
+   *
+   * @param key   The key to add to the log statement
+   * @param value The value to set for the key in the log statement
+   */
+  public record KeyValue(@NonNull String key, @NonNull Object value) {
+
+  }
+
+  /**
+   * Creates a new marker instance using its default <em>LOGFMT</em> name and assigns a key and
+   * value to it as property.
+   *
+   * @param key   A String based key to add to this marker
+   * @param value The value belonging to the key
+   * @return The reference to the new marker instance
+   */
+  public static LogFmtMarker with(@NonNull final String key, @NonNull final Object value) {
+    return new LogFmtMarker().and(key, value);
+  }
+
+  /**
+   * Creates a new marker instance using its default <em>LOGFMT</em> name and assigns a key and
+   * value to it as property.
+   *
+   * @param key   An Object based key to add to this marker
+   * @param value The value belonging to the key
+   * @return The reference to the new marker instance
+   */
+  public static LogFmtMarker with(@NonNull final Object key, @NonNull final Object value) {
+    return new LogFmtMarker().and(key, value);
+  }
+
+  /**
+   * Creates a new marker instance using the given name and assigns a key and value to it as
+   * property.
+   *
+   * @param name  The name of the marker instance
+   * @param key   A String based key to add to this marker
+   * @param value The value belonging to the key
+   * @return The reference to the new marker instance
+   */
+  public static LogFmtMarker with(@NonNull final String name,
+                                  @NonNull final String key,
+                                  @NonNull final Object value) {
+    return new LogFmtMarker(name).and(key, value);
+  }
+
+  /**
+   * Creates a new marker instance using the given name and assigns a key and value to it as
+   * property.
+   *
+   * @param name  The name of the marker instance
+   * @param key   An Object based key to add to this marker
+   * @param value The value belonging to the key
+   * @return The reference to the new marker instance
+   * @throws IllegalArgumentException if <em>name</em> is null or empty
+   */
+  public static LogFmtMarker with(@NonNull final String name,
+                                  @NonNull final Object key,
+                                  @NonNull final Object value) {
+    return new LogFmtMarker(name).and(key, value);
+  }
+
+  /**
+   * Creates a new marker instance using its default <em>LOGFMT</em> name and assigns it a
+   * callback hook for customizing the log output for a particular field identified by
+   * {@link ApplyCallbackFor}.
+   *
+   * <p>The callback will receive the log message as it would be logged without any preprocessing
+   * applied as well as a reference of the internally managed key and value segments that make up
+   * a log message.
+   *
+   * <p>The callback can be used to either filter out unwanted stuff from the log segment the
+   * callback is applied for or, as demonstrated with the sample code below, move parts of the
+   * respective log message to a separate field.
+   *
+   * <pre><code>
+   * Marker marker = LogFmtMarker.withCustomized(LogFmtMarker.ApplyCallbackFor.MESSAGE,
+   *         (msg, keyValues) -> {
+   *           String separator = "-----";
+   *           int idx = msg.lastIndexOf(separator) + separator.length();
+   *           String history = msg.substring(0, idx);
+   *           String message = msg.substring(idx + 1);
+   *
+   *           keyValues.add(new LogFmtMarker.KeyValue("history", history));
+   *           return message;
+   *         });
+   * </code></pre>
+   *
+   * <p>In the above sample the original value to log is taken and modified by removing the
+   * history part of that log message and storing it as new <em>history</em> field.
+   *
+   * <p>If multiple {@link LogFmtMarker} objects are chained and multiple customizations are
+   * present for the same field, i.e. the <em>msg</em> field, subsequent instances will receive
+   * the modified log message as input.
+   *
+   * @param applyFor The field to apply the customization for. Currently, only
+   *                 {@link ApplyCallbackFor#MESSAGE} and {@link ApplyCallbackFor#ERROR} fields
+   *                 are supported
+   * @param callback The callback to apply before generating the log statement. If multiple
+   *                 chained callbacks for the same field are present, consecutive callbacks will
+   *                 receive the output of the previous callback as input. The second input argument
+   *                 will be a list of key-value entries the current marker has configured. This
+   *                 can be used to add further customized keys and their value to the log line
+   * @return The initialized marker
+   * @since 1.0.3
+   */
+  public static LogFmtMarker withCustomized(
+          @Nullable final ApplyCallbackFor applyFor,
+          @NonNull final BiFunction<String, List<KeyValue>, String> callback) {
+    return new LogFmtMarker().andCallback(applyFor, callback);
+  }
+
+  /**
+   * Creates a new marker instance using its specified marker name and assigns it a callback hook
+   * for customizing the log output for a particular field identified by {@link ApplyCallbackFor}.
+   *
+   * <p>The callback will receive the log message as it would be logged without any preprocessing
+   * applied as well as a reference of the internally managed key and value segments that make up
+   * a log message.
+   *
+   * <p>The callback can be used to either filter out unwanted stuff from the log segment the
+   * callback is applied for or, as demonstrated with the sample code below, move parts of the
+   * respective log message to a separate field.
+   *
+   * <pre><code>
+   * Marker marker = LogFmtMarker.withCustomized(
+   *         "CONFIDENTIAL",
+   *         LogFmtMarker.ApplyCallbackFor.MESSAGE,
+   *         (msg, keyValues) -> {
+   *           String separator = "-----";
+   *           int idx = msg.lastIndexOf(separator) + separator.length();
+   *           String history = msg.substring(0, idx);
+   *           String message = msg.substring(idx + 1);
+   *
+   *           keyValues.add(new LogFmtMarker.KeyValue("history", history));
+   *           return message;
+   *         });
+   * </code></pre>
+   *
+   * <p>In the above sample the original value to log is taken and modified by removing the
+   * history part of that log message and storing it as new <em>history</em> field.
+   *
+   * <p>If multiple {@link LogFmtMarker} objects are chained and multiple customizations are
+   * present for the same field, i.e. the <em>msg</em> field, subsequent instances will receive
+   * the modified log message as input.
+   *
+   * @param applyFor The field to apply the customization for. Currently, only
+   *                 {@link ApplyCallbackFor#MESSAGE} and {@link ApplyCallbackFor#ERROR} fields
+   *                 are supported
+   * @param callback The callback to apply before generating the log statement. If multiple
+   *                 chained callbacks for the same field are present, consecutive callbacks will
+   *                 receive the output of the previous callback as input. The second input argument
+   *                 will be a list of key-value entries the current marker has configured. This
+   *                 can be used to add further customized keys and their value to the log line
+   * @return The initialized marker
+   * @since 1.0.3
+   */
+  public static LogFmtMarker withCustomized(
+          @NonNull final String name,
+          @Nullable final ApplyCallbackFor applyFor,
+          @NonNull final BiFunction<String, List<KeyValue>, String> callback) {
+    return new LogFmtMarker(name).andCallback(applyFor, callback);
   }
 }

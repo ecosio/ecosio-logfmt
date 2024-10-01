@@ -27,14 +27,16 @@
   <inceptionYear>2023</inceptionYear>
 
   <properties>
-    <maven.compiler.source>17</maven.compiler.source>
-    <maven.compiler.target>17</maven.compiler.target>
-    <maven.compiler.release>17</maven.compiler.release>
+    <maven.compiler.source>21</maven.compiler.source>
+    <maven.compiler.target>21</maven.compiler.target>
+    <maven.compiler.release>21</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
     <revision>0-SNAPSHOT</revision>
-    <junit.version>5.10.2</junit.version>
+    <junit.version>5.11.1</junit.version>
+    <!-- disable automatic agent instrumentation and sharing of stack information across JVMs-->
+    <argLine>-Xshare:off</argLine>
   </properties>
 
   <repositories>
@@ -108,7 +110,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-gpg-plugin</artifactId>
-            <version>3.2.4</version>
+            <version>3.2.7</version>
             <executions>
               <execution>
                 <id>sign-artifacts</id>
@@ -132,7 +134,7 @@
           <plugin>
             <groupId>org.sonatype.central</groupId>
             <artifactId>central-publishing-maven-plugin</artifactId>
-            <version>0.4.0</version>
+            <version>0.6.0</version>
             <extensions>true</extensions>
             <configuration>
               <publishingServerId>central</publishingServerId>
@@ -151,20 +153,20 @@
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
-      <version>2.0.12</version>
+      <version>2.0.16</version>
     </dependency>
     <!-- https://mvnrepository.com/artifact/ch.qos.logback/logback-classic -->
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <version>1.5.3</version>
+      <version>1.5.8</version>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/com.github.spotbugs/spotbugs-annotations -->
     <dependency>
       <groupId>com.github.spotbugs</groupId>
       <artifactId>spotbugs-annotations</artifactId>
-      <version>4.8.3</version>
+      <version>4.8.6</version>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/org.junit.jupiter/junit-jupiter-api -->
@@ -192,14 +194,21 @@
     <dependency>
       <groupId>org.hamcrest</groupId>
       <artifactId>hamcrest</artifactId>
-      <version>2.2</version>
+      <version>3.0</version>
       <scope>test</scope>
     </dependency>
     <!-- https://mvnrepository.com/artifact/org.mockito/mockito-junit-jupiter -->
     <dependency>
       <groupId>org.mockito</groupId>
       <artifactId>mockito-junit-jupiter</artifactId>
-      <version>5.11.0</version>
+      <version>5.14.1</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/org.mockito/mockito-core -->
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>5.14.1</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -214,7 +223,7 @@
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>versions-maven-plugin</artifactId>
-          <version>2.16.2</version>
+          <version>2.17.1</version>
           <configuration>
             <rulesUri>file://${basedir}/version-rules.xml</rulesUri>
           </configuration>
@@ -223,7 +232,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-enforcer-plugin</artifactId>
-          <version>3.4.1</version>
+          <version>3.5.0</version>
           <executions>
             <execution>
               <id>enforce-maven</id>
@@ -244,13 +253,13 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-clean-plugin</artifactId>
-          <version>3.3.2</version>
+          <version>3.4.0</version>
         </plugin>
         <!-- Adds source files in a separate JAR file -->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-source-plugin</artifactId>
-          <version>3.3.0</version>
+          <version>3.3.1</version>
           <executions>
             <execution>
               <id>attach-sources</id>
@@ -269,16 +278,13 @@
             <source>${maven.compiler.source}</source>
             <target>${maven.compiler.target}</target>
             <release>${maven.compiler.release}</release>
-            <compilerArgs>
-              <compilerArg>-Xlint:unchecked</compilerArg>
-            </compilerArgs>
           </configuration>
         </plugin>
         <!-- Generate javadoc -->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
-          <version>3.6.3</version>
+          <version>3.10.0</version>
           <configuration>
             <source>${maven.compiler.source}</source>
             <show>protected</show>
@@ -326,7 +332,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-jar-plugin</artifactId>
-          <version>3.3.0</version>
+          <version>3.4.2</version>
           <configuration>
             <excludes>
               <exclude>**/*.properties</exclude>
@@ -344,19 +350,19 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-install-plugin</artifactId>
-          <version>3.1.1</version>
+          <version>3.1.3</version>
         </plugin>
         <!-- Deploys the artifact to a remote repository during deploy phase -->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-deploy-plugin</artifactId>
-          <version>3.1.1</version>
+          <version>3.1.3</version>
         </plugin>
         <!-- We have to sign the deployment files in order to deploy those to Maven Central -->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-gpg-plugin</artifactId>
-          <version>3.2.4</version>
+          <version>3.2.7</version>
           <configuration>
             <useAgent>true</useAgent>
           </configuration>
@@ -377,7 +383,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-site-plugin</artifactId>
-          <version>3.12.1</version>
+          <version>3.20.0</version>
           <executions>
             <execution>
               <id>stage-for-scm-publish</id>
@@ -396,19 +402,43 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-project-info-reports-plugin</artifactId>
-          <version>3.5.0</version>
+          <version>3.7.0</version>
+        </plugin>
+        <!-- This plugin has lots of goals like analyzing and copying dependencies to some target
+             location, print the dependency tree or unpack dependencies. In this case we use it to
+             add a separate property for each dependency so that the dependencies can get referenced
+             in other plugins, like in the maven-surefire-plugin where the Mockito agent is added to
+              the forked JVM
+         -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-dependency-plugin</artifactId>
+          <version>3.8.0</version>
+          <executions>
+            <execution>
+              <goals>
+                <goal>properties</goal>
+              </goals>
+            </execution>
+          </executions>
         </plugin>
         <!-- Surefire is a test framework project. -->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>3.2.5</version>
+          <version>3.5.0</version>
+          <configuration>
+            <parallel>classes</parallel>
+            <threadCount>10</threadCount>
+            <workingDirectory>${project.build.directory}</workingDirectory>
+            <argLine>@{argLine} -javaagent:${org.mockito:mockito-core:jar}</argLine>
+          </configuration>
         </plugin>
         <!-- Failsafe is used to run integration tests -->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-failsafe-plugin</artifactId>
-          <version>3.2.5</version>
+          <version>3.5.0</version>
         </plugin>
         <!-- This loads the content of header-*.txt into header-* Maven properties to be included
              for resource filtering below. -->
@@ -439,13 +469,13 @@
             <dependency>
               <groupId>org.apache.groovy</groupId>
               <artifactId>groovy-ant</artifactId>
-              <version>4.0.21</version>
+              <version>4.0.23</version>
               <scope>runtime</scope>
             </dependency>
             <dependency>
               <groupId>org.apache.groovy</groupId>
               <artifactId>groovy-xml</artifactId>
-              <version>4.0.21</version>
+              <version>4.0.23</version>
               <scope>runtime</scope>
             </dependency>
           </dependencies>
@@ -455,7 +485,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-checkstyle-plugin</artifactId>
-          <version>3.3.1</version>
+          <version>3.5.0</version>
           <configuration>
             <configLocation>src/etc/checkstyle.xml</configLocation>
             <consoleOutput>true</consoleOutput>
@@ -471,6 +501,24 @@
               </goals>
             </execution>
           </executions>
+        </plugin>
+        <!-- Static source code analyzer -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-pmd-plugin</artifactId>
+          <version>3.25.0</version>
+          <configuration>
+            <targetJdk>${maven.compiler.target}</targetJdk>
+            <linkXRef>true</linkXRef>
+            <minimumTokens>100</minimumTokens>
+            <verbose>true</verbose>
+            <rulesets>
+              <ruleset>${project.basedir}/src/etc/pmd-rules.xml</ruleset>
+            </rulesets>
+            <excludeRoots>
+              <excludeRoot>${project.basedir}/target/generated-sources/*</excludeRoot>
+            </excludeRoots>
+          </configuration>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -536,6 +584,11 @@
         <artifactId>maven-checkstyle-plugin</artifactId>
         <version>3.3.1</version>
       </plugin>
+      <!-- Needed by surefire tests to make the Mockito agent available to the forked JVMs-->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+      </plugin>
     </plugins>
   </build>
 
@@ -565,13 +618,13 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
-        <version>3.6.3</version>
+        <version>3.10.0</version>
         <inherited>true</inherited>
         <configuration>
-          <source>17</source>
+          <source>21</source>
           <show>protected</show>
           <failOnWarnings>false</failOnWarnings>
-          <release>17</release>
+          <release>21</release>
         </configuration>
         <reportSets>
           <reportSet>
@@ -586,7 +639,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-report-plugin</artifactId>
-        <version>3.2.5</version>
+        <version>3.5.0</version>
         <configuration>
           <showSuccess>true</showSuccess>
           <linkXRef>true</linkXRef>
@@ -596,7 +649,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jxr-plugin</artifactId>
-        <version>3.3.2</version>
+        <version>3.5.0</version>
       </plugin>
       <!-- Checkstyle report-->
       <plugin>
@@ -628,7 +681,40 @@
       <plugin>
         <groupId>com.github.spotbugs</groupId>
         <artifactId>spotbugs-maven-plugin</artifactId>
-        <version>4.8.4.0</version>
+        <version>4.8.6.4</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-pmd-plugin</artifactId>
+        <version>3.25.0</version>
+        <configuration>
+          <targetJdk>${maven.compiler.target}</targetJdk>
+          <linkXRef>true</linkXRef>
+          <minimumTokens>100</minimumTokens>
+          <verbose>true</verbose>
+          <rulesets>
+            <ruleset>${project.basedir}/src/etc/pmd-rules.xml</ruleset>
+          </rulesets>
+          <excludeRoots>
+            <excludeRoot>${project.basedir}/target/generated-sources/*</excludeRoot>
+          </excludeRoots>
+        </configuration>
+        <reportSets>
+          <reportSet><!-- by default, id = "default" -->
+            <reports><!-- select non-aggregate reports -->
+              <report>pmd</report>
+              <report>cpd</report>
+            </reports>
+          </reportSet>
+          <reportSet><!-- aggregate reportSet, to define in poms having modules -->
+            <id>aggregate</id>
+            <inherited>false</inherited> <!-- don't run aggregate in child modules -->
+            <reports>
+              <report>aggregate-pmd</report>
+              <report>aggregate-cpd</report>
+            </reports>
+          </reportSet>
+        </reportSets>
       </plugin>
     </plugins>
   </reporting>

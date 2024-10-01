@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<ruleset name="All Java Rules"
+         xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+
+    <!--
+    Best Practices: https://docs.pmd-code.org/pmd-doc-7.3.0/pmd_rules_java_bestpractices.html
+    Code Style:     https://docs.pmd-code.org/pmd-doc-7.3.0/pmd_rules_java_codestyle.html
+    Design:         https://docs.pmd-code.org/pmd-doc-7.3.0/pmd_rules_java_design.html
+    Documentation:  https://docs.pmd-code.org/pmd-doc-7.3.0/pmd_rules_java_documentation.html
+    Error Prone:    https://docs.pmd-code.org/pmd-doc-7.3.0/pmd_rules_java_errorprone.html
+    Multithreading: https://docs.pmd-code.org/pmd-doc-7.3.0/pmd_rules_java_multithreading.html
+    Performance:    https://docs.pmd-code.org/pmd-doc-7.3.0/pmd_rules_java_performance.html
+    Security:       https://docs.pmd-code.org/pmd-doc-7.3.0/pmd_rules_java_security.html
+    -->
+
+    <description>Every Java Rule in PMD</description>
+
+    <rule ref="category/java/bestpractices.xml" />
+    <rule ref="category/java/codestyle.xml">
+        <exclude name="OnlyOneReturn" /> <!-- likelihood for less performant code -->
+    </rule>
+    <rule ref="category/java/design.xml">
+        <exclude name="DataClass" /> <!-- data classes are fine when used wisely and sparingly -->
+        <exclude name="LoosePackageCoupling" /> <!-- misconfiguration warning -->
+    </rule>
+    <rule ref="category/java/documentation.xml" />
+    <rule ref="category/java/errorprone.xml" />
+    <rule ref="category/java/multithreading.xml" />
+    <rule ref="category/java/performance.xml" />
+    <rule ref="category/java/security.xml" />
+
+    <!-- customizations and rule overriding -->
+
+    <rule ref="category/java/documentation.xml/CommentSize">
+        <properties>
+            <property name="maxLines" value="200" />  <!-- default 6 ...-->
+            <property name="maxLineLength" value="100" />  <!-- default 80 ...-->
+        </properties>
+    </rule>
+
+    <rule ref="category/java/codestyle.xml/ShortVariable">
+        <properties>
+            <property name="minimum" value="1" />  <!-- default 3 ...-->
+        </properties>
+    </rule>
+
+    <rule ref="category/java/codestyle.xml/LongVariable">
+        <properties>
+            <property name="minimum" value="20" />  <!-- default 17 ...-->
+        </properties>
+    </rule>
+
+    <rule ref="category/java/design.xml/TooManyMethods">
+        <properties>
+            <property name="maxmethods" value="25" /> <!-- default 10 ...-->
+        </properties>
+    </rule>
+
+</ruleset>

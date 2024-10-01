@@ -1,4 +1,4 @@
-package com.ecosio.logfmt;
+package com.ecosio.logfmt.test;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -65,7 +65,7 @@ public class EventBuilder {
             new StackTraceElement("com.ecosio.logfmt.LogFmtLayout",
                     "doLayout", "LogFmtLayout.java", 215);
     stackTraceElements[1] =
-            new StackTraceElement("com.ecosio.logfmt.LogFmtLayoutTest",
+            new StackTraceElement("com.ecosio.logfmt.test.LogFmtLayoutTest",
                     "build", "LogFmtLayoutTest.java", 101);
     when(event.getCallerData()).thenReturn(stackTraceElements);
 
