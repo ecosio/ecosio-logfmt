@@ -27,9 +27,9 @@
   <inceptionYear>2023</inceptionYear>
 
   <properties>
-    <maven.compiler.source>21</maven.compiler.source>
-    <maven.compiler.target>21</maven.compiler.target>
-    <maven.compiler.release>21</maven.compiler.release>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+    <maven.compiler.release>17</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
@@ -621,10 +621,10 @@
         <version>3.10.0</version>
         <inherited>true</inherited>
         <configuration>
-          <source>21</source>
+          <source>${maven.compiler.source}</source>
           <show>protected</show>
           <failOnWarnings>false</failOnWarnings>
-          <release>21</release>
+          <release>${maven.compiler.release}</release>
         </configuration>
         <reportSets>
           <reportSet>
