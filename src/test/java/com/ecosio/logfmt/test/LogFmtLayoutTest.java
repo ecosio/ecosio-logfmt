@@ -1,53 +1,28 @@
-package com.ecosio.logfmt;
+package com.ecosio.logfmt.test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.matchesPattern;
+import static org.hamcrest.Matchers.startsWith;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import java.util.HashMap;
 import java.util.Map;
+import com.ecosio.logfmt.ApplyCallbackFor;
+import com.ecosio.logfmt.LogFmtLayout;
+import com.ecosio.logfmt.LogFmtMarker;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
 
 @DisplayName("LogFmtLayout")
 public class LogFmtLayoutTest {
-
-  @Nested
-  @DisplayName("escapes")
-  public class EscapeTest {
-
-    @Test
-    @DisplayName("simple quoted string")
-    public void escapeSimpleQuotedString() {
-      assertThat(LogFmtLayout.escapeValue("The \"message\"").toString(),
-              is(equalTo("The \\\"message\\\"")));
-    }
-
-    @Test
-    @DisplayName("strings containing carriage returns")
-    public void carriageReturns() {
-      assertThat(LogFmtLayout.escapeValue("The \n carriage \n return").toString(),
-              is(equalTo("The \\n carriage \\n return")));
-    }
-
-    @Test
-    @DisplayName("strings containing tabulators")
-    public void tabulators() {
-      assertThat(LogFmtLayout.escapeValue("The \t tab \t return").toString(),
-              is(equalTo("The \\t tab \\t return")));
-    }
-
-    @Test
-    @DisplayName("strings containing backslashes")
-    public void backslashes() {
-      assertThat(LogFmtLayout.escapeValue("The \\ backslash \\ return").toString(),
-              is(equalTo("The \\\\ backslash \\\\ return")));
-    }
-  }
 
   @Test
   @DisplayName("adds prefix when specified")
@@ -86,8 +61,26 @@ public class LogFmtLayoutTest {
   }
 
   @Test
+  @DisplayName("supports messages with escaped literals")
+  public void messageWithEscapedCharacters() {
+    // Arrange
+    ILoggingEvent event = new EventBuilder("test message with \"escaped\" literals").build();
+    LogFmtLayout layout = new LogFmtLayout();
+
+    // Act
+    String result = layout.doLayout(event);
+
+    // Assert
+    String expected =
+            "time=\"2017-11-30T15:10:25\" level=info thread=thread0 "
+                    + "package=com.ecosio.logfmt module=LogFmtLayout "
+                    + "msg=\"test message with \\\"escaped\\\" literals\"\n";
+    assertThat(result, is(equalTo(expected)));
+  }
+
+  @Test
   @DisplayName("supports customizing time format")
-  public void customTimeFormat() {
+  public void customTimeFormat() throws IllegalAccessException {
     // Arrange
     ILoggingEvent event = new EventBuilder("test message").build();
     LogFmtLayout layout = new LogFmtLayout();
@@ -103,6 +96,19 @@ public class LogFmtLayoutTest {
             "time=\"2017-11-30 15:10:25\\+0[0|1]00\" level=info thread=thread0 "
                     + "package=com.ecosio.logfmt module=LogFmtLayout msg=\"test message\"\n";
     assertThat(result, matchesPattern(expected));
+  }
+
+  @Test
+  @DisplayName("throws an exception when an invalid date/time format is passed")
+  public void illegalTimeFormat() {
+    LogFmtLayout layout = new LogFmtLayout();
+
+    try {
+      layout.setTimeFormat("invalid Time format");
+      fail("should have thrown an illegal argument exception as an invalid date/time format was provided");
+    } catch (Exception ex) {
+      assertThat(ex, is(instanceOf(IllegalArgumentException.class)));
+    }
   }
 
   @Test
@@ -213,20 +219,19 @@ public class LogFmtLayoutTest {
   @DisplayName("support preprocessing message fields")
   public void preprocessCustomizedMessageField() {
     // Arrange
-    final String testMsg = "Failed delivery for (MessageId: ee980790-c1bb-11ee-a43b-c9fd07729bd1" +
-            " on ExchangeId: ee980790-c1bb-11ee-a43b-c9fd07729bd1). Exhausted after delivery " +
-            "attempt: 2 caught: java.lang.NullPointerException: host must not be null.\\n" +
-            "\\n" +
-            "Message History (source location and message history is disabled)\\n" +
-            "---------------------------------------------------------------------------------------------------------------------------------------\\n" +
-            "Source                                   ID                             Processor                                          Elapsed (ms)\\n" +
-            "                                         sample-route-failing/bean01 from[file:///opt/some-file-to-process?antExclude=*.tm   1160398262\\n" +
-            "\\t...\\n" +
-            "                                         sample-route-failing/RemoteWri bean[com.acme.someClass.failingBean                           0\\n" +
-            "\\n" +
-            "Stacktrace\\n" +
-            "--------------------------------------------------------------------------------------------------------------------------------------- " +
-            "Part that should stay in the message";
+    final String testMsg = """
+            Failed delivery for (MessageId: ee980790-c1bb-11ee-a43b-c9fd07729bd1 on ExchangeId: ee980790-c1bb-11ee-a43b-c9fd07729bd1). Exhausted after delivery attempt: 2 caught: java.lang.NullPointerException: host must not be null.
+
+            Message History (source location and message history is disabled)
+            ---------------------------------------------------------------------------------------------------------------------------------------
+            Source                                   ID                             Processor                                          Elapsed (ms)
+                                                     sample-route-failing/bean01 from[file:///opt/some-file-to-process?antExclude=*.tm   1160398262
+            \t...
+                                                     sample-route-failing/RemoteWri bean[com.acme.someClass.failingBean                           0
+
+            Stacktrace
+            ---------------------------------------------------------------------------------------------------------------------------------------
+            Part that should stay in the message""";
 
     Marker marker = LogFmtMarker.withCustomized(ApplyCallbackFor.MESSAGE,
             (msg, keyValues) -> {
@@ -258,16 +263,16 @@ public class LogFmtLayoutTest {
                     + "history=\"Failed delivery for (MessageId: " +
                     "ee980790-c1bb-11ee-a43b-c9fd07729bd1"
                     + " on ExchangeId: ee980790-c1bb-11ee-a43b-c9fd07729bd1). Exhausted after delivery "
-                    + "attempt: 2 caught: java.lang.NullPointerException: host must not be null.\\\\n"
-                    + "\\\\n"
-                    + "Message History (source location and message history is disabled)\\\\n"
-                    + "---------------------------------------------------------------------------------------------------------------------------------------\\\\n"
-                    + "Source                                   ID                             Processor                                          Elapsed (ms)\\\\n"
-                    + "                                         sample-route-failing/bean01 from[file:///opt/some-file-to-process?antExclude=*.tm   1160398262\\\\n"
-                    + "\\\\t...\\\\n"
-                    + "                                         sample-route-failing/RemoteWri bean[com.acme.someClass.failingBean                           0\\\\n"
-                    + "\\\\n"
-                    + "Stacktrace\\\\n"
+                    + "attempt: 2 caught: java.lang.NullPointerException: host must not be null.\\n"
+                    + "\\n"
+                    + "Message History (source location and message history is disabled)\\n"
+                    + "---------------------------------------------------------------------------------------------------------------------------------------\\n"
+                    + "Source                                   ID                             Processor                                          Elapsed (ms)\\n"
+                    + "                                         sample-route-failing/bean01 from[file:///opt/some-file-to-process?antExclude=*.tm   1160398262\\n"
+                    + "\\t...\\n"
+                    + "                                         sample-route-failing/RemoteWri bean[com.acme.someClass.failingBean                           0\\n"
+                    + "\\n"
+                    + "Stacktrace\\n"
                     +
                     "---------------------------------------------------------------------------------------------------------------------------------------\"\n";
     assertThat(result, is(equalTo(expected)));
@@ -289,7 +294,7 @@ public class LogFmtLayoutTest {
             "time=\"2017-11-30T15:10:25\" level=info thread=thread0 "
                     + "package=com.ecosio.logfmt module=LogFmtLayout msg=\"test message\" "
                     + "error=\"java.lang.Exception: fubar\\n"
-                    + "\\tat com.ecosio.logfmt.LogFmtLayoutTest.errors(LogFmtLayoutTest.java:";
+                    + "\\tat ecosio.logfmt.test/com.ecosio.logfmt.test.LogFmtLayoutTest.errors(LogFmtLayoutTest.java:";
     assertThat(result, startsWith(expected));
   }
 
@@ -326,7 +331,7 @@ public class LogFmtLayoutTest {
             "time=\"2017-11-30T15:10:25\" level=info thread=thread0 "
                     + "package=com.ecosio.logfmt module=LogFmtLayout msg=\"test message\" "
                     + "error=\"java.lang.Exception: fubar\\n"
-                    + "\\tat com.ecosio.logfmt.LogFmtLayoutTest.customized_errors(LogFmtLayoutTest.java:";
+                    + "\\tat ecosio.logfmt.test/com.ecosio.logfmt.test.LogFmtLayoutTest.customized_errors(LogFmtLayoutTest.java:";
     assertThat(result, startsWith(expected));
     assertThat(result, containsString("root=\"java.lang.Exception: root\\n"));
   }
@@ -408,8 +413,8 @@ public class LogFmtLayoutTest {
     String expected =
             "time=\"2017-11-30T15:10:25\" level=info thread=thread0 "
                     + "package=com.ecosio.logfmt module=LogFmtLayout "
-                    + "msg=\"GET /some/service\\\\nHost: example.com\\\\n"
-                    + "Authorization: Basic dXN***3Jk\\\\n\\\\n"
+                    + "msg=\"GET /some/service\\nHost: example.com\\n"
+                    + "Authorization: ***\\n\\n"
                     + "<html><head><title>Test Page</title></head><body>Test content</body></html>\"\n";
     assertThat(result, is(equalTo(expected)));
   }
@@ -435,8 +440,8 @@ public class LogFmtLayoutTest {
     String expected =
             "time=\"2017-11-30T15:10:25\" level=info thread=thread0 "
                     + "package=com.ecosio.logfmt module=LogFmtLayout "
-                    + "msg=\"GET /some/service\\\\nHost: example.com\\\\n"
-                    + "Authorization: Basic dXNlcjE6c29tZVBhc3N3b3Jk\\\\n\\\\n"
+                    + "msg=\"GET /some/service\\nHost: example.com\\n"
+                    + "Authorization: Basic dXNlcjE6c29tZVBhc3N3b3Jk\\n\\n"
                     + "<html><head><title>Test Page</title></head><body>Test content</body></html>\"\n";
     assertThat(result, is(equalTo(expected)));
   }
@@ -547,7 +552,7 @@ public class LogFmtLayoutTest {
     } finally {
       // as we add the logfmt marker to the static confidential marker it will still be contained
       // in other methods that will retrieve the marker using the MarkerFactory! Hence, we remove
-      // it manually after this test so it doesn't influence other tests
+      // it manually after this test, so it doesn't influence other tests
       confidential.remove(marker);
     }
   }

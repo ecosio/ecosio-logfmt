@@ -28,18 +28,18 @@ In Maven the above-mentioned dependencies can be defined and imported like this:
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
-      <version>2.0.12</version>
+      <version>2.0.16</version>
     </dependency>
     <!-- https://mvnrepository.com/artifact/ch.qos.logback/logback-classic -->
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <version>1.5.3</version>
+      <version>1.5.8</version>
     </dependency>
     <dependency>
       <groupId>com.ecosio</groupId>
       <artifactId>ecosio-logfmt</artifactId>
-      <version>1.0.3</version>
+      <version>1.1.0</version>
     </dependency>
     ...
   </dependencies>
@@ -276,3 +276,239 @@ next marker and so forth. The generated output therefore is a result of all used
 have a preprocessing hook defined for a particular field. If the line passed to the
 customization hook does not meet certain user-defined expectations the original input message
 should be returned by that hook.
+
+## Testing ecosio-logfmt locally
+
+In order to test `ecosio-logfmt` locally first in a more real-life scenario, the following example
+showcases how to setup Grafana/Loki locally and use Promtail to push the generated log to Loki where
+it then can be shown.
+
+### Docker
+
+First, for simplicity the following `docker-compose` file can be used to download and run 
+preconfigured Grafana and Loki containers:
+
+```yaml
+version: "3"
+
+networks:
+  loki:
+
+services:
+  loki:
+    image: grafana/loki:2.9.2
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - loki
+
+  grafana:
+    environment:
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    entrypoint:
+      - sh
+      - -euc
+      - |
+        mkdir -p /etc/grafana/provisioning/datasources
+        cat <<EOF > /etc/grafana/provisioning/datasources/ds.yaml
+        apiVersion: 1
+        datasources:
+        - name: Loki
+          type: loki
+          access: proxy
+          orgId: 1
+          url: http://loki:3100
+          basicAuth: false
+          isDefault: true
+          version: 1
+          editable: false
+          EOF
+          /run.sh
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    networks:
+      - loki
+```
+
+To start the containers simply run the above `docker-compose.yaml` file via:
+
+```
+docker-compose up
+```
+
+This should spin up both the Grafana and Loki images. To test that Loki is up and running the 
+following URLs can be used to check the readiness and the metrics Loki returns:
+
+http://localhost:3100/ready
+http://localhost:3100/metrics
+
+Grafana can be access via
+
+http://localhost:3000
+
+The Web GUI requires to log in with an initial user in order to explore the LOGFMT formatted log 
+lines. The default username and password are both `admin` which can and should be changed in the 
+next step in Grafana.
+
+Once logged in successfully, clicking on `Explore` in the left-hand sided navigation menu should 
+load the respective log explorer.
+
+### Application configuration
+
+As we have a running Grafana nd Loki environment now, let's look at how to configure the application
+to generate logs that can be used by Loki.
+
+For local testing it is probably the easiest to define a file appender in `logback.xml` and write 
+the logs to a dedicated log file. We will configure `Promtail` in the next step to read in the log 
+lines and push them to Loki.
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration debug="false">
+
+    ...
+
+    <appender name="file" class="ch.qos.logback.core.FileAppender">
+        <file>./logs/acme.log</file>
+        <append>false</append>
+        <immediateFlush>true</immediateFlush>
+        <encoder class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+            <layout class="com.ecosio.logfmt.LogFmtLayout" />
+        </encoder>
+    </appender>
+
+    ...
+    
+    <logger name="com.acme.services" level="debug"/>
+    <logger name="org.springframework" level="info"/>
+    <logger name="org.springframework.web" level="info"/>
+
+    <root level="INFO">
+        <appender-ref ref="console"/>
+        <appender-ref ref="file"/>
+    </root>
+</configuration>
+```
+
+### Promtail
+
+Promtail is a command line interface (CLI) tool that sits on the machine or in the container the
+application to monitor is running and periodically reads various source files, performs some 
+processing steps and uploads the output to a target destination, Loki in this case. 
+
+Please make sure that `promtail` is installed and available on your system. On MacOS this can be 
+done via
+
+```
+brew install promtail
+```
+
+while on Ubuntu Linix Promtail can be installed via
+
+```
+sudo apt install promtail
+```
+
+For Windows or other operating systems, please refer to the 
+[Promtail reference](https://grafana.com/docs/loki/latest/send-data/promtail/installation/
+
+Promtail has its own config where the resources to read in as well as the target to send the data to
+can be configured. A sample configuration here can look like this:
+
+```yaml
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/app_positions.yaml
+
+clients:
+  - url: http://localhost:3100/loki/api/v1/push
+
+scrape_configs:
+
+  - job_name: acme
+    static_configs:
+    - targets:
+        - localhost
+      labels:
+        app: "acme"
+        __path__: ./logs/*log
+    pipeline_stages:
+    - match:
+        selector: '{app="acme"}'
+        stages:
+          - logfmt:
+              mapping:
+                app:
+                time:
+                level:
+                thread:
+                package:
+                module:
+                msg:
+                error:
+          - replace:
+              # \\n --> \n ...
+              expression: "(\\\\n)"
+              replace: "\n"
+          - replace:
+              # \\t --> \t ...
+              expression: "(\\\\t)"
+              replace: "\t"
+          - replace:
+              # \\\" -> "
+              expression: "(\\\\\\\")"
+              replace: "\""
+```
+
+This configuration defines that the log file should be read from a log file contained in a `logs` 
+subdirectory of where the promtail command, we will use in a minute, was issued from. It furthermore
+configures the target location to push the logs to, `http://localhost:3100/loki/api/v1/push` in this
+case. The biggest portion of the configuration is dedicated to the pipeline configuration which 
+allows promtail to pre-process log lines before sending the logs to Loki.
+
+As `ecosio-logfmt` escapes special characters found within a string, such as newline (`\n`), tab 
+(`\t`) or escaped quotation mark (`\"`) characters to have one cohesive log-line for a log event
+instead of having it spread out on multiple lines, we configure promtail here to undo those special 
+escaping to show the log lines more human-friendly in Loki. Not escaping those characters in 
+`ecosio-logfmt` would add multiple log-lines to Loki in case newline characters are available within
+a log line. This breaks the readability of the log events notably. While promtail has a `multiline`
+pipeline step to undo these splits, that step uses a regular expression pattern to determine which 
+parts belong to the log line and which not and this can be error-prone in practice. As such, 
+`ecosio-logfmt` decided to use escaped special characters and simply replace them in the promtail 
+configuration.
+
+In order to push the pre-processed log-lines to Loki the following command can be used:
+
+```console
+promtail -config.file=promtail-local-config.yaml
+```
+
+assuming that the configuration above is located in the root of application directory and named 
+`promtail-local-config.yaml` and application logs are written to a `logs` subdirectory.
+
+If the application is now started and logs to the `logs/` subdirectory, promtail will pick up those 
+logs, preprocesses them according to the defined pipeline and push them to Loki which will show them
+in Grafana ultimately.
+
+### Exploring uploaded logs
+
+Once logs have been pushed by promtail `http://localhost:3000/explore` can be opened in your 
+browser. In the `Label filters` dropdown entries for the whole log file and for the `app` label 
+should be present. If you select one of these, you should be able to select either the actual log 
+file or the name of the app that produced the logs in the `Select value` drop down as well.
+
+If you start a search now you will notice that it doesn't really extract properties from the 
+respective log lines. On clicking on the `+ Operations` button and selecting `Formats` -> `Logfmt`
+should add `| logfmt` to the query part. If you click `Run query` again the logs should now contain
+the labels that were defined in the *logfmt mapping* step of the promtail pipeline stage. If your
+log output contained newline or tab symbols these should be rendered human-friendly in Loki now as 
+well.
+
+![loki-logfmt-log-line.png](media%2Floki-logfmt-log-line.png)
